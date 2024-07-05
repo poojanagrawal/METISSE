@@ -8,7 +8,7 @@ subroutine METISSE_zcnsts(z,zpars,path_to_tracks,path_to_he_tracks,ierr)
     integer, intent(out) :: ierr
     
     character(LEN=strlen), allocatable :: track_list(:)
-    character(LEN=strlen) :: USE_DIR, find_cmd,rnd, infile
+    character(LEN=strlen) :: USE_DIR, find_cmd, rnd, infile
     integer :: i,j,nloop,jerr
     integer :: num_tracks
     
@@ -20,7 +20,7 @@ subroutine METISSE_zcnsts(z,zpars,path_to_tracks,path_to_he_tracks,ierr)
     ierr = 0
     
     ! At this point in the code front_end might not be assigned
-    ! So we return ierr and let zcnsts.f of overlying code
+    ! So we return ierr and let zcnsts.f of the overlying code
     ! decide how to deal with errors.
 
     code_error = .false.
@@ -35,8 +35,9 @@ subroutine METISSE_zcnsts(z,zpars,path_to_tracks,path_to_he_tracks,ierr)
     ! read one set of stellar tracks (of input Z)
     load_tracks = .false.
     
-    if (initial_Z <0) then
+    if (allocated(sa) .eqv. .false.) then
         load_tracks = .true.
+        open(1000,file='tracks_log.txt',action='write',status='unknown')
     else
         ! tracks have been loaded at least once, for initial_Z
         ! check if they need to be reloaded
@@ -94,12 +95,11 @@ subroutine METISSE_zcnsts(z,zpars,path_to_tracks,path_to_he_tracks,ierr)
         ierr = 1; return
     end select
     
+    if (front_end /= main) initial_Z = z
+    
     call get_metallicity_file_list(TRACKS_DIR,metallicity_file_list)
     if (TRACKS_DIR_HE/='') call get_metallicity_file_list(TRACKS_DIR_HE,metallicity_file_list_he)
-    
-!    metallicity_file_list = pack(metallicity_file_list,mask=len_trim(metallicity_file_list)>0)
-!    metallicity_file_list_he = pack(metallicity_file_list_he,mask=len_trim(metallicity_file_list_he)>0)
-    
+        
     if (size(metallicity_file_list)<1) then
         print*, "METISSE error: metallicity file(s) not found in", trim(tracks_dir)
         print*, "check if tracks_dir is correct"
@@ -121,7 +121,6 @@ subroutine METISSE_zcnsts(z,zpars,path_to_tracks,path_to_he_tracks,ierr)
         out_unit = 6   !will write to screen
     else
         out_unit = 1000    !will write to file
-        open(1000,file='tracks_log.txt',action='write',status='unknown')
     endif
     
     if (write_error_to_file) then
@@ -130,10 +129,7 @@ subroutine METISSE_zcnsts(z,zpars,path_to_tracks,path_to_he_tracks,ierr)
         err_unit = 6      !will write to screen
     endif
     write(out_unit,'(a,f10.6)') ' Input Z is :', Z
-    
-    
-    if (front_end /= main) initial_Z = z
-
+        
     ! need to intialize these seperately as they may be
     ! used uninitialized if he tracks are not present
     i_he_RCO = -1
