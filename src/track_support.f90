@@ -401,8 +401,8 @@ module track_support
         print*, 'METISSE error: NO EEP FILE WRITTEN, either provide FILENAME or mass of the star'
         return
     ENDIF
-    
-    if (verbose) print*,'writing',str,'M.track.eep'
+
+    if (verbose) print*,'writing: ',trim(eep_filename)
     
     call calculate_sse_phases(x,phase)
     

@@ -13,7 +13,7 @@ subroutine evolv_metisse(mass,max_age,ierr,id)
 
     integer :: str,lines,old_phase,idd
     real(dp):: tphys,timestep,dt,dtr
-    character(len=strlen) :: output_file,eep_filename
+    character(len=strlen) :: output_file
     logical :: output, t_end
     real(dp) :: dms, M_env,dml,x
     type(track), pointer :: t
@@ -44,16 +44,13 @@ subroutine evolv_metisse(mass,max_age,ierr,id)
     if (t% complete .eqv..false.) ierr = 1
 
   !write the mass interpolated track if write_eep_file is true
-    if (write_eep_file) then
-        write(eep_filename,"(a,a,i5.5,a)") trim(METISSE_DIR),"/output/",str,"M_full.track.eep"
-        call write_eep_track(t,mass,eep_filename)
-    end if
+    if (write_eep_file) call write_eep_track(t,mass)
 
     lines = 0
     tphys = 0.d0
     timestep = 0.d0
     old_phase = -1
-    t_end  = .false.
+    t_end = .false.
     epoch = 0.d0
     
     !SSE like output file if write_track_to_file is true

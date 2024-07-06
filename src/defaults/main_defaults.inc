@@ -97,4 +97,4 @@
     ! 'write_track_to_file' generates a SSE style output file 
     ! only at the END of the evolution
 
-    write_track_to_file = .true.
+    write_track_to_file = .false.

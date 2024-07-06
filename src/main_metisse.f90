@@ -55,8 +55,6 @@ program metisse_main
     t_incomplete = 0.d0
     
     
-!    call allocate_track(number_of_tracks,mass_array)
-
     !evolve stars
     do i = 1,number_of_tracks
         mass = mass_array(i)
@@ -76,7 +74,6 @@ program metisse_main
     t_notfound = pack(t_notfound, mask = t_notfound >0)
 
     if (size(t_notfound)>0) then
-        !write(*,'(a6, i9, a10,f7.3, a20)') "count", i, "ERROR: ", mass_array(i), "is out of bounds."
         write(*,*) "Stellar tracks of following initial masses were not interpolated."
         write(*,'(10f7.3)') t_notfound
         write(*,'(a25,f7.3, a5,f7.3)') "Reason: out of bounds for " , Mcrit(1)% mass," and ", Mcrit(9)% mass
