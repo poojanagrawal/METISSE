@@ -1202,16 +1202,11 @@ module z_support
         
         old_co_frac = 0.d0
 
-        !if already defined, do index search here otherwise search below
-        do i = 2, size(Mcrit)-1
-            if (.not. defined(Mcrit(i)% mass)) cycle
-            call index_search (num_tracks, mass_list, Mcrit(i)% mass, min_index)
-            Mcrit(i)% mass = xa(min_index)% initial_mass
-            Mcrit(i)% loc = min_index
-            if (debug) print*, i, Mcrit(i)% mass
-        end do
+        call index_search (num_tracks, mass_list, Mcrit(2)% mass, min_index)
+        Mcrit(2)% mass = xa(min_index)% initial_mass
+        Mcrit(2)% loc = min_index
 
-        start = max(Mcrit(1)% loc, Mcrit(2)% loc)
+        start = max(1, Mcrit(2)% loc)
         
         do i = start, size(xa)
             if(xa(i)% complete .eqv. .false.) cycle
@@ -1347,13 +1342,6 @@ module z_support
         
         if (debug) print*,"Mup_core =", Mup_core
         if (debug) print*,"Mec_core =", Mec_core
-
-        if (allocated(m_cutoff)) deallocate( m_cutoff)
-        allocate (m_cutoff(size(Mcrit)))
-        
-        m_cutoff = Mcrit% loc
-        call sort_mcutoff(m_cutoff)
-        if (debug) print*, "m_cutoffs: ", m_cutoff
     
         !now redefine zpars where applicable
         do i = 3,7
@@ -1386,6 +1374,23 @@ module z_support
         Mec = zpars(5)
     
         if (debug) print*, 'zpars:',  zpars(1:5)
+        
+        !discrad old values, get actual locations for sa array
+        do i = 3, size(Mcrit)-1
+            if (.not. defined(Mcrit(i)% mass)) cycle
+            call index_search (num_tracks, mass_list, Mcrit(i)% mass, min_index)
+            Mcrit(i)% mass = xa(min_index)% initial_mass
+            Mcrit(i)% loc = min_index
+            if (debug) print*, i, Mcrit(i)% mass
+        end do
+        
+        if (allocated(m_cutoff)) deallocate( m_cutoff)
+        allocate (m_cutoff(size(Mcrit)))
+        
+        m_cutoff = Mcrit% loc
+        call sort_mcutoff(m_cutoff)
+        if (debug) print*, "m_cutoffs: ", m_cutoff
+        
         deallocate(mass_list)
     end subroutine set_zparameters
 
@@ -1426,17 +1431,7 @@ module z_support
         write(out_unit,'(a,f7.1)') ' Minimum initial mass', Mcrit_he(1)% mass
         write(out_unit,'(a,f7.1)') ' Maximum initial mass', Mcrit_he(9)% mass
         
-        !if already defined, do index search here otherwise search below
-        do i = 2, size(Mcrit_he)-1
-            if (.not. defined(Mcrit_he(i)% mass)) cycle
-            call index_search (num_tracks, mass_list, Mcrit_he(i)% mass, min_index)
-            Mcrit_he(i)% mass = xa(min_index)% initial_mass
-            Mcrit_he(i)% loc = min_index
-        end do
-
-        start = max(Mcrit_he(1)% loc, Mcrit_he(2)% loc)
-        
-        do i = start, size(xa)
+        do i = 1, size(xa)
             if (xa(i)% complete .eqv. .false.) cycle
             smass = xa(i)% initial_mass
             len_track = xa(i)% ntrack
@@ -1487,17 +1482,25 @@ module z_support
                 Mcrit_he(i)% loc = 0
             endif
         end do
-
+        
+        !discrad old values, get actual locations for sa_he array
+        do i = 2, size(Mcrit_he)-1
+            if (.not. defined(Mcrit_he(i)% mass)) cycle
+            call index_search (num_tracks, mass_list, Mcrit_he(i)% mass, min_index)
+            Mcrit_he(i)% mass = xa(min_index)% initial_mass
+            Mcrit_he(i)% loc = min_index
+        end do
+        
         !Mec
         Mcrit_he(7)% loc = max(Mcrit_he(7)% loc,1)
 
-        if (allocated(m_cutoff_he)) deallocate( m_cutoff_he)
+        if (allocated(m_cutoff_he)) deallocate(m_cutoff_he)
         allocate (m_cutoff_he(size(Mcrit_he)))
         m_cutoff_he = Mcrit_he% loc
         call sort_mcutoff(m_cutoff_he)
         if (debug) print*, "m_cutoffs he : ", m_cutoff_he
 
-!        deallocate(mass_list)
+        deallocate(mass_list)
     end subroutine set_zparameters_he
     
     subroutine sort_mcutoff(m_cutoff)
