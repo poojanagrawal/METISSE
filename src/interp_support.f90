@@ -850,7 +850,6 @@ module interp_support
         type(star_parameters) :: pars
         real(dp),intent (in) :: new_line(:,:)
         real(dp) :: lim_R
-        
         pars% mass = new_line(i_mass,1)
         pars% McHe = new_line(i_he_core,1)
         pars% McCO = new_line(i_co_core,1)
@@ -868,6 +867,8 @@ module interp_support
 
         pars% radius = 10**pars% log_R
         pars% core_radius = -1.0
+
+        if (i_binding_energy > 0) pars% binding_energy = new_line(i_binding_energy, 1)
         
         if (pars% phase <= TPAGB) then
             if (pars% phase == TPAGB ) then

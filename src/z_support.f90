@@ -57,7 +57,7 @@ module z_support
                         Lum_colname, Teff_colname, Radius_colname, &
                         he_core_mass, co_core_mass, he_core_radius, co_core_radius, &
                         log_Tc, c12_mass_frac, o16_mass_frac,he4_mass_frac, &
-                        mass_conv_envelope, radius_conv_envelope, &
+                        mass_conv_envelope, radius_conv_envelope, binding_energy_colname, &
                         ZAMS_HE_EEP, TAMS_HE_EEP, GB_HE_EEP, cCBurn_HE_EEP, TPAGB_HE_EEP, &
                         post_AGB_HE_EEP, Initial_EEP_HE, Final_EEP_HE
                         !moment_of_inertia,
@@ -520,6 +520,9 @@ module z_support
         if (ierr/=0) return
         
         !optional columns
+        i_binding_energy = -1
+        if (binding_energy_colname /= '') i_binding_energy = locate_column(cols, binding_energy_colname, ierr)
+
         if (is_he_track) then
             if (co_core_radius/= '') i_he_RCO = locate_column(cols, co_core_radius, ierr)
             if (mass_conv_envelope/= '') i_he_mcenv = locate_column(cols, mass_conv_envelope, ierr)
@@ -629,7 +632,8 @@ module z_support
         call assign_sgl_col(temp, i_he_core, he_core_mass,n)
         call assign_sgl_col(temp, i_co_core, co_core_mass,n)
         call assign_sgl_col(temp, i_logTe, log_T_colname,n)
-
+        
+        if (i_binding_energy > 0) call assign_sgl_col(temp, i_binding_energy, binding_energy_colname, n)
         if(is_he_track) then
             if (i_he_RCO >0) call assign_sgl_col(temp, i_he_RCO, co_core_radius,n)
             if (i_he_mcenv>0) call assign_sgl_col(temp, i_he_mcenv, mass_conv_envelope,n)
