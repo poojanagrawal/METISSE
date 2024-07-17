@@ -32,7 +32,7 @@ subroutine METISSE_gntage(mc,mt,kw,zpars,m0,aj,id)
     ! below simplification avoids error in length
     if(mt<Mmin_array(TA_cHeB_EEP) .and. kw>1 .and. kw<7) then != very_low_mass_limit
         mt = Mmin_array(TA_cHeB_EEP)
-        if(debug) write(*,*)print*,'Changed mass in gntage:',mt,mt0
+        if(debug) write(*,*)'Changed mass in gntage:',mt,mt0
     endif
     
     !this is just to signal star that gnatge is calling it
