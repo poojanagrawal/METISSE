@@ -46,7 +46,7 @@ subroutine METISSE_zcnsts(z,zpars,path_to_tracks,path_to_he_tracks,ierr)
         if (relative_diff(initial_Z,z) .ge. Z_accuracy_limit) load_tracks = .true.
 
         ! maybe metallicity is same, but paths may have changed
-        ! (if paths are same, then metallicity doesn't matter)
+        ! (for different stellar parameters)
         ! TODO: currently only for cosmic, can be modified to include others as well
         if (front_end == COSMIC)then
             if((trim(path_to_tracks)/=trim(TRACKS_DIR)) .or. &
@@ -198,7 +198,7 @@ subroutine METISSE_zcnsts(z,zpars,path_to_tracks,path_to_he_tracks,ierr)
         ! this is opposite to the check for format file as
         ! find command gives confusing error message that cannot be suppressed
         
-        ! reset ierr to 0 if not already
+        ! reset ierr to 0 if it's not already
         ierr = 0
         
         write(out_unit,*)"Reading input files from: ", trim(INPUT_FILES_DIR)
@@ -216,7 +216,7 @@ subroutine METISSE_zcnsts(z,zpars,path_to_tracks,path_to_he_tracks,ierr)
         write(out_unit,*)"Found: ", num_tracks, " tracks"
         allocate(xa(num_tracks))
         xa% filename = track_list
-        set_cols = .true.
+        get_cols = .true.
         
         if (i == 2) then
             xa% is_he_track = .true.
@@ -231,8 +231,8 @@ subroutine METISSE_zcnsts(z,zpars,path_to_tracks,path_to_he_tracks,ierr)
         if (read_eep_files) then
             if (debug) print*,"reading eep files"
             do j=1,num_tracks
-                call read_eep(xa(j),ierr)
-                if (ierr/=0) return
+                call read_eep(xa(j))
+                if (code_error) return
                 if(debug) write(*,'(a100,f8.2,99i8)') trim(xa(j)% filename), xa(j)% initial_mass, xa(j)% ncol
             end do
         else
@@ -256,13 +256,13 @@ subroutine METISSE_zcnsts(z,zpars,path_to_tracks,path_to_he_tracks,ierr)
             end if
 
             do j=1,num_tracks
-                call read_input_file(xa(j),ierr)
-                if (ierr/=0) return
+                call read_input_file(xa(j))
+                if (code_error) return
                 if(debug) write(*,'(a100,f8.2,99i8)') trim(xa(j)% filename), xa(j)% initial_mass, xa(j)% ncol
             end do
         endif
         
-        call count_tracks(num_tracks)
+        call check_tracks(num_tracks)
 
         ! Processing the input tracks
         if (i==2) then

@@ -3,7 +3,7 @@ module z_support
     implicit none
 
     character(LEN=strlen) :: INPUT_FILES_DIR
-    logical :: read_eep_files, read_all_columns, set_cols
+    logical :: read_eep_files, read_all_columns, get_cols
 
     integer :: max_files = 50
     character(LEN=strlen) :: format_file, extra_columns_file
@@ -40,9 +40,9 @@ module z_support
                         WD_mass_scheme,use_initial_final_mass_relation, allow_electron_capture, &
                         BHNS_mass_scheme, max_NS_mass,pts_1, pts_2, pts_3, write_track_to_file
 
-    namelist /METISSE_input_controls/ tracks_dir, Z_accuracy_limit, &
-                        mass_accuracy_limit, construct_wd_track, verbose, &
-                        write_eep_file,write_error_to_file, tracks_dir_he
+    namelist /METISSE_input_controls/ tracks_dir, tracks_dir_he, &
+                        Z_accuracy_limit, mass_accuracy_limit, verbose, &
+                        write_eep_file,write_error_to_file, construct_wd_track
             
     namelist /metallicity_controls/ INPUT_FILES_DIR, Z_files,format_file, extra_columns_file, &
                         read_all_columns, extra_columns,Mhook, Mhef, Mfgb, Mup, Mec, Mextra, Z_H, Z_He
@@ -113,18 +113,14 @@ module z_support
     
     
     subroutine get_metallicity_file_list(path,file_list)
-
-    character(LEN=strlen) :: path
-    character(LEN=strlen), allocatable :: temp_list(:),file_list(:)
-
-    integer :: ierr, n
+        character(LEN=strlen) :: path
+        character(LEN=strlen), allocatable :: temp_list(:),file_list(:)
+        integer :: ierr, n
 
         if (allocated(file_list)) deallocate(file_list)
-        
         ierr = 0
-       
+        
         call get_files_from_path(path,'_metallicity.in',temp_list,ierr)
-
         if (.not. allocated(temp_list)) then
             print*, 'Could not find metallicity file(s) in ',trim(path)
             ierr = 1
@@ -187,12 +183,10 @@ module z_support
     
     subroutine read_metallicity_file(filename,ierr)
         character(LEN=strlen), intent(in) :: filename
-
         integer :: io
         integer, intent(out) :: ierr
 
         ierr = 0
-        
         !initialize the defaults (even if already set)
         include 'defaults/metallicity_defaults.inc'
         
@@ -215,10 +209,8 @@ module z_support
         integer, intent(out) :: ierr
         
         ierr = 0
-        
         !initialize file format specs
         include 'defaults/format_defaults.inc'
-        
         
         io = alloc_iounit(ierr)
         !read file format specs
@@ -239,18 +231,15 @@ module z_support
         character(LEN=strlen), intent(in) :: path
         character(LEN=*), intent(in) :: extension
         character(LEN=strlen), allocatable :: file_list(:)
-
-        integer, intent (out) ::  ierr
+        integer, intent(out) ::  ierr
 
         character(LEN=strlen) :: str,find_cmd
         integer :: n,i, io
     
         ierr = 0
-        
         find_cmd = 'find '//trim(path)//'/*'//trim(extension)//' -maxdepth 1 > .file_name.txt'
         
         call system(find_cmd,ierr)
-        
         if (ierr/=0) return
 
         io = alloc_iounit(ierr)
@@ -272,26 +261,25 @@ module z_support
             if (ierr/=0) exit
             file_list(i) = trim(str)
         end do
-        
+
         close(io)
         call free_iounit(io)
         
     end subroutine get_files_from_path
 
-    subroutine read_eep(x,ierr)      !from iso/iso_eep_support.f90
+    subroutine read_eep(x)
+        !adapted from iso/iso_eep_support.f90
         type(track), intent(inout) :: x
-        integer, intent(out) :: ierr
+        integer :: ierr
         integer :: io, j
 
         character(LEN=8) :: phase_info
         character(LEN=strlen) :: eepfile
         character(LEN=10) :: type_label
-        
         logical :: debug
 
         ierr = 0
         debug = .false.
-
         eepfile = trim(x% filename)
 
         io = alloc_iounit(ierr)
@@ -336,8 +324,8 @@ module z_support
         enddo
 
         !determine column of mass, age etc.
-        if (set_cols) call locate_column_numbers(x% cols, x% ncol,x% is_he_track,ierr)
-        if (ierr/=0) return
+        if (get_cols) call get_named_columns(x% cols, x% ncol,x% is_he_track)
+        if (code_error) return
         
         if (x% is_he_track) then
             x% initial_mass = x% tr(i_mass,ZAMS_HE_EEP)
@@ -345,8 +333,6 @@ module z_support
             x% initial_mass = x% tr(i_mass,ZAMS_EEP)
         endif
         
-!        max(x% initial_mass,maxval(x% tr(i_mass,:)))
-    !    call set_star_type_from_label(type_label,x)
         call set_star_type_from_history(x)
 
         close(io)
@@ -355,9 +341,9 @@ module z_support
     end subroutine read_eep
     
     !adapted from read_history_file of iso_eep_support
-    subroutine read_input_file(x,ierr)
+    subroutine read_input_file(x)
         type(track), intent(inout) :: x
-        integer, intent(out) :: ierr
+        integer :: ierr
         
         character(LEN=10000) :: line  
         integer :: i, io, j
@@ -409,10 +395,8 @@ module z_support
         endif
 
         x% ntrack = j
-        
         x% ncol = total_cols
         allocate(x% tr(x% ncol, x% ntrack),x% cols(x% ncol))
-
         x% cols% name = temp_cols% name
 
         do j=1, x% ntrack
@@ -424,8 +408,9 @@ module z_support
         call free_iounit(io)
 
         !determine column of mass, age etc.
-        if (set_cols) call locate_column_numbers(temp_cols, total_cols,x% is_he_track,ierr)
-        if (ierr/=0) return
+        if (get_cols) call get_named_columns(temp_cols, total_cols,x% is_he_track)
+        if (code_error) return
+        
         if(header_location >0) deallocate(temp_cols)
 
         if (x% is_he_track) then
@@ -468,15 +453,13 @@ module z_support
     end subroutine split
 
     !locating essential columns here
-    subroutine locate_column_numbers(cols,ncol,is_he_track,ierr)
+    subroutine get_named_columns(cols,ncol,is_he_track)
         type(column), intent(in) :: cols(:)
         integer, intent(in) :: ncol
         logical, intent(in) :: is_he_track
-        integer, intent(out) :: ierr
         logical :: essential
         
         essential = .true.
-        ierr = 0
         
         ! i_age is the extra age column for recording age values of new tracks
         ! it is used for interpolating in surface quantities after any explicit mass gain/loss
@@ -484,83 +467,72 @@ module z_support
         
         i_age = ncol+1
         
-        i_age2 = locate_column(cols, age_colname, ierr , essential)
-        i_mass = locate_column(cols, mass_colname, ierr , essential)
+        i_age2 = locate_column(cols, age_colname, essential)
+        i_mass = locate_column(cols, mass_colname, essential)
         
         if (log_L_colname /= '') then
             !find the log luminosity column
-            i_logL = locate_column(cols, log_L_colname, ierr , essential)
-
+            i_logL = locate_column(cols, log_L_colname, essential)
         else
-            !find the luminosity column and convert it into log
-            i_logL = locate_column(cols, Lum_colname, ierr , essential)
-            call make_logcolumn(xa, i_logL)
+            !find the luminosity column, convert it into log later
+            i_logL = locate_column(cols, Lum_colname, essential)
         endif
 
         if (log_R_colname/= '') then
-            i_logR = locate_column(cols, log_R_colname, ierr , essential)
+            i_logR = locate_column(cols, log_R_colname, essential)
         else
-            i_logR = locate_column(cols, Radius_colname, ierr , essential)
-            call make_logcolumn(xa, i_logR)
+            i_logR = locate_column(cols, Radius_colname, essential)
         endif
 
         !Teff gets calculated in the code, but the col used at several other places
 
         if (log_T_colname/= '') then
-            i_logTe = locate_column(cols, log_T_colname, ierr , essential)
+            i_logTe = locate_column(cols, log_T_colname, essential)
         else
-            i_logTe = locate_column(cols, Teff_colname, ierr , essential)
-            call make_logcolumn(xa, i_logTe)
+            i_logTe = locate_column(cols, Teff_colname, essential)
         endif
             
-        i_he_core = locate_column(cols, he_core_mass, ierr , essential)
-        i_co_core = locate_column(cols, co_core_mass, ierr , essential)
+        i_he_core = locate_column(cols, he_core_mass, essential)
+        i_co_core = locate_column(cols, co_core_mass, essential)
         
-        !Return with an error if cannot locate one of the essential columns
-        if (ierr/=0) return
+        !Return if cannot locate any of the essential columns
+        if (code_error) return
         
         !optional columns
         if (is_he_track) then
-            if (co_core_radius/= '') i_he_RCO = locate_column(cols, co_core_radius, ierr)
-            if (mass_conv_envelope/= '') i_he_mcenv = locate_column(cols, mass_conv_envelope, ierr)
-            if (radius_conv_envelope/= '') i_he_rcenv = locate_column(cols, radius_conv_envelope, ierr)
-!            if (moment_of_inertia/= '') i_he_MoI = locate_column(cols, moment_of_inertia, ierr)
+            if (co_core_radius/= '') i_he_RCO = locate_column(cols, co_core_radius)
+            if (mass_conv_envelope/= '') i_he_mcenv = locate_column(cols, mass_conv_envelope)
+            if (radius_conv_envelope/= '') i_he_rcenv = locate_column(cols, radius_conv_envelope)
             i_he_age = ncol+1
         else
             i_RHe_core = -1
             i_RCO_core = -1
-            if (he_core_radius/= '') i_RHe_core = locate_column(cols, he_core_radius, ierr)
-            if (co_core_radius/= '') i_RCO_core = locate_column(cols, co_core_radius, ierr)
+            if (he_core_radius/= '') i_RHe_core = locate_column(cols, he_core_radius)
+            if (co_core_radius/= '') i_RCO_core = locate_column(cols, co_core_radius)
             i_mcenv = -1
-            if (mass_conv_envelope/= '') i_mcenv = locate_column(cols, mass_conv_envelope, ierr)
+            if (mass_conv_envelope/= '') i_mcenv = locate_column(cols, mass_conv_envelope)
             i_Rcenv = -1
-            if (radius_conv_envelope/= '') i_rcenv = locate_column(cols, radius_conv_envelope, ierr)
-!            i_MoI = -1
-!            if (moment_of_inertia/= '') i_MoI = locate_column(cols, moment_of_inertia, ierr)
+            if (radius_conv_envelope/= '') i_rcenv = locate_column(cols, radius_conv_envelope)
         endif
         
+        if (he4_mass_frac/= '') i_he4 = locate_column(cols, he4_mass_frac)
+        if (c12_mass_frac/= '') i_c12 = locate_column(cols, c12_mass_frac)
+        if (o16_mass_frac/= '') i_o16 = locate_column(cols, o16_mass_frac)
+        if (log_Tc/= '') i_Tc = locate_column(cols, log_Tc)
         
-        i_he4 = locate_column(cols, he4_mass_frac, ierr)
-        i_c12 = locate_column(cols, c12_mass_frac, ierr)
-        i_o16 = locate_column(cols, o16_mass_frac, ierr)
-        i_Tc = locate_column(cols, log_Tc, ierr)
+        get_cols = .false.
         
-        set_cols = .false.
-        
-    end subroutine locate_column_numbers
+    end subroutine get_named_columns
 
 
-    integer function locate_column(cols,colname,ierr,essential)
+    integer function locate_column(cols,colname,essential)
         character(LEN=col_width), intent(in) :: colname
         type(column), intent(in) :: cols(:)
-        integer, intent(out) :: ierr
-        
         logical, intent(in),optional :: essential
+        
         logical :: essential1
-
         integer :: i
 
-        ierr = 0
         !unless explicitly specified
         !assume that the column is not essential
         essential1 = .false.
@@ -568,7 +540,8 @@ module z_support
 
         !now find the column
         locate_column = -1
-        if (trim(colname)=='') return
+        if (len(colname)<1) return
+        
         do i=1,size(cols)
            if(adjustl(adjustr(cols(i)% name))==trim(colname)) then
               locate_column = i
@@ -578,34 +551,22 @@ module z_support
 
         !check whether the column has been successfully located
         if(locate_column<0) then
-            write(0,*) 'Could not find column: ', trim(colname)
-            if(essential1) then
-                ierr = 1; return
-            endif
+            write(out_unit,*) 'Could not find column: ', trim(colname)
+            if(essential1) code_error = .true.
         endif
         
     end function locate_column
       
     subroutine make_logcolumn(x, itemp)
-        type(track) :: x(:)
-        integer :: itemp,k
-        do k = 1, size(x)
-            x(k)% tr(itemp,:) = log10(x(k)% tr(itemp,:))
-            x(k)% cols(itemp)% name = "log("//trim(x(k)% cols(itemp)% name)//")"
-        end do
+        type(track) :: x
+        integer :: itemp
+        
+        x% tr(itemp,:) = log10(x% tr(itemp,:))
+        x% cols(itemp)% name = "log("//trim(x% cols(itemp)% name)//")"
+        
     end subroutine make_logcolumn
-    
-    subroutine make_pow10column(x, itemp,newname)
-        type(track) :: x(:)
-        integer :: itemp,k
-        character(LEN=col_width), intent(in), optional :: newname
-        do k = 1, size(x)
-            x(k)% tr(itemp,:) = 10.d0**(x(k)% tr(itemp,:))
-            if (present(newname)) x(k)% cols(itemp)% name = trim(newname)
-        end do
-    end subroutine make_pow10column
 
-    subroutine get_key_columns(cols,ncol,is_he_track)
+    subroutine set_key_columns(cols,ncol,is_he_track)
         type(column), intent(in) :: cols(:)
         integer, intent(in) :: ncol
         logical, intent(in) :: is_he_track
@@ -628,33 +589,25 @@ module z_support
         call assign_sgl_col(temp, i_logR, log_R_colname,n)
         call assign_sgl_col(temp, i_he_core, he_core_mass,n)
         call assign_sgl_col(temp, i_co_core, co_core_mass,n)
-        call assign_sgl_col(temp, i_logTe, log_T_colname,n)
+        if (i_logTe>0) call assign_sgl_col(temp, i_logTe, log_T_colname,n)
 
         if(is_he_track) then
             if (i_he_RCO >0) call assign_sgl_col(temp, i_he_RCO, co_core_radius,n)
             if (i_he_mcenv>0) call assign_sgl_col(temp, i_he_mcenv, mass_conv_envelope,n)
             if (i_he_Rcenv>0) call assign_sgl_col(temp, i_he_Rcenv, radius_conv_envelope,n)
-!            if (i_he_MoI>0) call assign_sgl_col(temp, i_he_MoI, moment_of_inertia,n)
          else
         
             if (i_RHe_core >0) call assign_sgl_col(temp, i_RHe_core, he_core_radius,n)
             if (i_RCO_core >0) call assign_sgl_col(temp, i_RCO_core, co_core_radius,n)
             if (i_mcenv>0) call assign_sgl_col(temp, i_mcenv, mass_conv_envelope,n)
             if (i_Rcenv>0) call assign_sgl_col(temp, i_Rcenv, radius_conv_envelope,n)
-!            if (i_MoI>0) call assign_sgl_col(temp, i_MoI, moment_of_inertia,n)
-                        
-!            if (i_Tc >0) call assign_sgl_col(temp, i_Tc, log_Tc,n)
-!            if (i_he4 >0) call assign_sgl_col(temp, i_he4, he4_mass_frac,n)
-!            if (i_c12 >0) call assign_sgl_col(temp, i_c12,c12_mass_frac,n)
-!            if (i_o16>0) call assign_sgl_col(temp, i_o16, o16_mass_frac,n)
-        
         endif
         
         c = count(len_trim(extra_columns)>0)
         if (c>0) then
             do i = 1, size(extra_columns)
                 if (len_trim(extra_columns(i))<1) exit
-                j = locate_column(cols,extra_columns(i),ierr)
+                j = locate_column(cols,extra_columns(i))
                 if (j>0 )then
                     temp(n)% loc = j
                     temp(n)% name = extra_columns(i)
@@ -664,12 +617,12 @@ module z_support
         else
             ierr = 0
             if (extra_columns_file /= '') call process_columns(extra_columns_file,temp_extra_columns,ierr)
-            if(ierr/=0) print*, "Failed while trying to read extra_columns_file"
-            
+            if(ierr/=0) print*, "Failed while trying to parse extra_columns_file"
+                
             if (allocated(temp_extra_columns)) then
                 do i = 1, size(temp_extra_columns)
                     if (len_trim(temp_extra_columns(i)% name)<1) exit
-                    temp(n)% loc = locate_column(cols,temp_extra_columns(i)% name,ierr)
+                    temp(n)% loc = locate_column(cols,temp_extra_columns(i)% name)
                     temp(n)% name = temp_extra_columns(i)% name
                     n = n+1
                 end do
@@ -677,7 +630,6 @@ module z_support
             endif
         endif
     
-!        if (allocated(key_cols)) deallocate(key_cols)
         allocate(key_cols(n-1))
         key_cols% name = temp(1:n-1)% name
         key_cols% loc = temp(1:n-1)% loc
@@ -685,7 +637,7 @@ module z_support
         i_age = n
         if(is_he_track) i_he_age = n
         
-    end subroutine get_key_columns
+    end subroutine set_key_columns
 
     subroutine assign_sgl_col(temp, col, colname,n)
         type(column) :: temp(:)
@@ -713,7 +665,7 @@ module z_support
         io = alloc_iounit(ierr)
         open(io,file=trim(filename),action='read',status='old',iostat=ierr)
         if(ierr/=0) then
-           write(*,*) 'failed to open columns list file: ', trim(filename)
+           write(out_unit,*) 'failed to open the file: ', trim(filename)
            call free_iounit(io)
            return
         endif
@@ -976,13 +928,16 @@ module z_support
         enddo
     end subroutine set_star_type_from_label
 
-    subroutine count_tracks(num_tracks)
+    subroutine check_tracks(num_tracks)
     
-    integer :: i, n, abs_min_ntrack
+    integer :: n, abs_min_ntrack
         real(dp) :: co_core, he_core, min_val
         logical :: debug
         integer, intent(out):: num_tracks
         
+        ! checks for the completeness of the tracks
+        ! and whether their core masses are correct or not
+        ! converts columns into log where needed
         debug = .false.
 
         do n = 1,size(xa)
@@ -994,6 +949,7 @@ module z_support
                 if (co_core< min_val .or. he_core< min_val .or. he_core< co_core) then
                 write(out_unit,*)'skipping ',xa(n)% filename, 'REASON: invalid core mass',co_core, he_core, xa(n)% initial_mass
                     xa(n)% complete = .false.
+                    cycle
                 endif
             endif
 
@@ -1003,12 +959,21 @@ module z_support
                 if (xa(n)% ntrack < abs_min_ntrack) then
                     write(out_unit,*)'skipping ',xa(n)% filename, 'REASON: length < TAMS_EEP',xa(n)% ntrack
                     xa(n)% complete = .false.
+                    cycle
                 endif
-                
+            
             endif
+            
+            ! for complete tracks, make logcolumns if need be
+            if (log_L_colname == '') call make_logcolumn(xa(n), i_logL)
+            if (log_R_colname == '') call make_logcolumn(xa(n), i_logR)
+            if (log_T_colname == '') call make_logcolumn(xa(n), i_logTe)
+            
         end do
+        
         num_tracks = count(xa% complete)
-        end subroutine
+        
+    end subroutine check_tracks
         
         
     subroutine copy_and_deallocatex(num_tracks,y)
@@ -1020,7 +985,7 @@ module z_support
         debug = .false.
 
         !determine key columns
-        call get_key_columns(xa(1)% cols, xa(1)% ncol, xa(1)% is_he_track)
+        call set_key_columns(xa(1)% cols, xa(1)% ncol, xa(1)% is_he_track)
         if (debug) print*,'key_cols', size(key_cols),xa(1)% ncol
         
         !copy columns and the track
@@ -1155,27 +1120,31 @@ module z_support
     subroutine set_zparameters(num_tracks,zpars)
         integer,intent(in) :: num_tracks
         real(dp), intent(out) :: zpars(20)
-        real(dp) :: old_co_frac,co_fraction,change_frac
-        real(dp) :: smass,Teff,last_val,he_diff, mup_max
+        
         real(dp), allocatable, dimension(:) :: T_centre, mass_list
+        real(dp) :: smass,Teff,last_val,he_diff
+        real(dp) :: old_co_frac,co_fraction,change_frac, mup_max, temp_Mup
         integer :: len_track, i, min_index
-        integer:: j_bagb, j_tagb, start
-
+        integer :: j, j_bagb, j_tagb, start
         logical:: debug
 
         debug = .false.
         
-        ! default is SSE
-        Mup_core = 1.6d0
-        Mec_core = 2.2d0
-        
-        !first calculate zpars the SSE way for use as backup
+        !first calculate zpars the SSE way for use as a backup
         call calculate_sse_zpars(initial_z,zpars)
 
+        old_co_frac = 0.d0
+        temp_Mup = -1.d0
+        j_tagb = max(1,min(cCBurn_EEP,TPAGB_EEP))      !end of agb
+        
+        ! this way avoids Fortran runtime warning: An array temporary was created
+        mass_list = xa% initial_mass
+        mass_list = pack(mass_list,mask = xa% complete.eqv..true.)
+        
         Mcrit% mass= -1.d0
         Mcrit% loc = 0
 
-        Mcrit(1)% mass = xa(1)% initial_mass
+        Mcrit(1)% mass = mass_list(1)
         Mcrit(1)% loc = 1
 
         Mcrit(2)% mass = very_low_mass_limit
@@ -1186,20 +1155,16 @@ module z_support
         Mcrit(7)% mass = Mec
         Mcrit(8)% mass = Mextra
 
-        Mcrit(9)% mass = xa(num_tracks)% initial_mass
-        Mcrit(9)% loc = num_tracks+1 !TODO: explain why+1?
+        Mcrit(9)% mass = mass_list(num_tracks)
+        Mcrit(9)% loc = num_tracks+1
+        ! masses for interpolation are searched between mcutoff(i) and (mcutoff(i+1)-1)
+        ! num_tracks+1 ensures that the last track is included
 
-        write(out_unit,'(a,f7.1)') ' Minimum initial mass', Mcrit(1)% mass
-        write(out_unit,'(a,f7.1)') ' Maximum initial mass', Mcrit(9)% mass
-
-!        allocate(mass_list(size(xa)))
-        mass_list = xa% initial_mass
-        mass_list = pack(mass_list,mask = xa% complete.eqv..true.)
-        
-        old_co_frac = 0.d0
+        write(out_unit,'(a,f7.1)')' Minimum initial mass', Mcrit(1)% mass
+        write(out_unit,'(a,f7.1)')' Maximum initial mass', Mcrit(9)% mass
 
         call index_search (num_tracks, mass_list, Mcrit(2)% mass, min_index)
-        Mcrit(2)% mass = xa(min_index)% initial_mass
+        Mcrit(2)% mass = mass_list(min_index)
         Mcrit(2)% loc = min_index
 
         start = max(1, Mcrit(2)% loc)
@@ -1220,7 +1185,6 @@ module z_support
                     last_val = T_centre(size(T_centre))
                     if (maxval(T_centre)>last_val) then
                         Mcrit(3)% mass = smass
-                        Mcrit(3)% loc = i
                         if (debug) print*,"Mhook",smass,i
                     endif
                     deallocate(T_centre)
@@ -1236,7 +1200,6 @@ module z_support
                     allocate(T_centre,source=xa(i)% tr(i_Tc,cHeIgnition_EEP:TA_cHeB_EEP))
                     if (minval(T_centre)>7.4) then
                         Mcrit(4)% mass = smass
-                        Mcrit(4)% loc = i
                         if (debug) print*,"Mhef",smass,i
                     endif
                     deallocate(T_centre)
@@ -1252,10 +1215,8 @@ module z_support
                     else
                         he_diff = 0.d0
                     endif
-!                    print*,"bgb",smass,Teff, he_diff
                     if (Teff> T_bgb_limit .or. he_diff >0.01) then
                         Mcrit(5)% mass = smass
-                        Mcrit(5)% loc = i
                         if (debug) print*,"Mfgb",smass,i
                     endif
                 endif
@@ -1268,22 +1229,20 @@ module z_support
                 if (Mcrit(7)% mass> 0.d0) mup_max = Mcrit(7)% mass
                 if ((Mcrit(6)% mass< 0.d0) .and. smass<mup_max) then
                     if (i_c12>0 .and. i_o16 >0) then
-                        j_tagb = min(cCBurn_EEP,TPAGB_EEP)      !end of agb
-                        j_tagb = min(len_track,j_tagb)
-                        co_fraction = xa(i)% tr(i_c12,j_tagb)+xa(i)% tr(i_o16,j_tagb)
-                        if (old_co_frac>0.0) then
-                            change_frac = abs(co_fraction-old_co_frac)
-                            change_frac = change_frac/old_co_frac
-                            if (change_frac>0.01) then
+                        j = min(len_track,j_tagb)
+                        co_fraction = xa(i)% tr(i_c12,j)+xa(i)% tr(i_o16,j)
+                        if (old_co_frac>0.d0) then
+                            change_frac = abs(co_fraction-old_co_frac)/old_co_frac
+                            if (change_frac>1d-2) then
                                 ! this is the mass at which C/O ignition occur
                                 ! we need the mass preceeding it
                                 ! (Mup = M below which C/O ignition doesn't occur)
-                                Mcrit(6)% loc = i-1
-                                Mcrit(6)% mass = xa(Mcrit(6)% loc)% initial_mass
+                                Mcrit(6)% mass = temp_Mup
                                 if (debug) print*,"Mup",Mcrit(6)% mass, Mcrit(6)% loc
                             endif
                         endif
                         old_co_frac = co_fraction
+                        temp_Mup = xa(i)% initial_mass
                     endif
                 endif
             endif
@@ -1292,7 +1251,6 @@ module z_support
             if (Mcrit(7)% mass< 0.d0)then
                 if (xa(i)% star_type == star_high_mass) then
                     Mcrit(7)% mass = smass
-                    Mcrit(7)% loc = i
                     if (debug) print*,"Mec",smass,i
                 endif
             endif
@@ -1303,51 +1261,42 @@ module z_support
         !picks up the first or second track, which can lead to errors later,
         !hence those values need to be reverted
 
-        do i = 2,size(Mcrit)-1
+        do i = 2,8
             if (Mcrit(i)% mass <= Mcrit(1)% mass) then
                 Mcrit(i)% mass= -1.d0
-                Mcrit(i)% loc = 0
             endif
         end do
-
-        if (Mcrit(7)% loc < 1) then
-            Mcrit(7)% mass = zpars(5)
-        else
-            j_bagb = min(xa(Mcrit(7)% loc)% ntrack,TA_cHeB_EEP)
-            Mec_core = xa(Mcrit(7)% loc)% tr(i_he_core,j_bagb)
-        endif
         
-        !if cannot locate Mup or located it beyond Mec (which is incorrect),
-
-        if (Mcrit(6)% loc < 1 .or. Mcrit(6)% loc >=  Mcrit(7)% loc) then
+        ! correct for zpars
+        do i = 3,7
+            if(defined(Mcrit(i)% mass)) cycle
+            Mcrit(i)% mass = zpars(i-2)
+        end do
+        
+        ! Correct Mup if it exceeds Mec
+        if (Mcrit(6)% mass .ge. Mcrit(7)% mass) then
             if (debug) print*, 'Mcrit(6)/Mup not found'
             if (debug) print*, 'Using value closest to Mec-1.8 (the SSE way)'
             !modify Mup by SSE's way
             Mcrit(6)% mass = Mcrit(7)% mass - 1.8d0
-            call index_search (num_tracks, mass_list, Mcrit(6)% mass, Mcrit(6)% loc)
-            !make sure the new location for Mup does not exceed Mec
-            if (Mcrit(7)% loc>1) Mcrit(6)% loc = min(Mcrit(6)% loc,Mcrit(7)% loc-1)
-        endif
-
-        if (Mcrit(6)% loc >= 1 .and. Mcrit(6)% loc <=num_tracks) then
-            Mcrit(6)% mass = xa(Mcrit(6)% loc)% initial_mass
-            if (debug) print*,"new Mup",Mcrit(6)% mass, Mcrit(6)% loc
-            j_bagb = min(xa(Mcrit(6)% loc)% ntrack,TA_cHeB_EEP)
-            Mup_core = xa(Mcrit(6)% loc)% tr(i_he_core,j_bagb)
         endif
         
-        if (debug) print*,"Mup_core =", Mup_core
-        if (debug) print*,"Mec_core =", Mec_core
-    
-        !now redefine zpars where applicable
-        do i = 3,7
-            if(defined(Mcrit(i)% mass)) then
-                zpars(i-2) = Mcrit(i)% mass
-            else
-                Mcrit(i)% mass = zpars(i-2)
-            endif
+        ! get actual locations for sa array
+        ! doing it in reverse, so location for Mec is assigned before Mup
+        ! and the location Mup can be cross-checked
+        do i = 8,3,-1
+            if (.not. defined(Mcrit(i)% mass)) cycle
+            call index_search (num_tracks, mass_list, Mcrit(i)% mass, min_index)
+            !Once again, ensure that the location for Mup does not exceed Mec
+            if (i ==6 .and. Mcrit(7)% loc>1) min_index = min(min_index,Mcrit(7)% loc-1)
+            Mcrit(i)% mass = mass_list(min_index)
+            Mcrit(i)% loc = min_index
+            if (debug) print*, i, Mcrit(i)% mass, min_index
         end do
-    
+
+        !now redefine zpars with new values
+        Mcrit(3:7)% mass = zpars(1:5)
+        
         if (defined(Z_He)) then
             zpars(12) = Z_He
         elseif (xa(1)% initial_Y >0.d0)then
@@ -1362,53 +1311,61 @@ module z_support
         
         Z04 = initial_Z**0.4
         
-        !Redefine these for use later in the code
+        if (debug) print*, 'zpars:',  zpars(1:5)
+        
+        ! also redefine these for future use
         Mhook = zpars(1)
         Mhef = zpars(2)
         Mfgb = zpars(3)
         Mup = zpars(4)
         Mec = zpars(5)
-    
-        if (debug) print*, 'zpars:',  zpars(1:5)
         
-        !discrad old values, get actual locations for sa array
-        do i = 3, size(Mcrit)-1
-            if (.not. defined(Mcrit(i)% mass)) cycle
-            call index_search (num_tracks, mass_list, Mcrit(i)% mass, min_index)
-            Mcrit(i)% mass = xa(min_index)% initial_mass
-            Mcrit(i)% loc = min_index
-            if (debug) print*, i, Mcrit(i)% mass
-        end do
-        
-        if (allocated(m_cutoff)) deallocate( m_cutoff)
+        ! get mcutoffs
+        if (allocated(m_cutoff)) deallocate(m_cutoff)
         allocate (m_cutoff(size(Mcrit)))
         
         m_cutoff = Mcrit% loc
         call sort_mcutoff(m_cutoff)
         if (debug) print*, "m_cutoffs: ", m_cutoff
         
+        ! default is SSE
+        Mup_core = 1.6d0
+        Mec_core = 2.2d0
+        
+        if (Mcrit(7)% loc >= 1 .and. Mcrit(7)% loc <=num_tracks) then
+            j_bagb = min(xa(Mcrit(7)% loc)% ntrack,TA_cHeB_EEP)
+            Mec_core = xa(Mcrit(7)% loc)% tr(i_he_core,j_bagb)
+        endif
+        
+        if (Mcrit(6)% loc >= 1 .and. Mcrit(6)% loc <=num_tracks) then
+            j_bagb = min(xa(Mcrit(6)% loc)% ntrack,TA_cHeB_EEP)
+            Mup_core = xa(Mcrit(6)% loc)% tr(i_he_core,j_bagb)
+        endif
+        
+        if (debug) print*,"Mup_core =", Mup_core
+        if (debug) print*,"Mec_core =", Mec_core
+        
         deallocate(mass_list)
+
     end subroutine set_zparameters
 
     subroutine set_zparameters_he(num_tracks)
-            integer, intent(in) :: num_tracks
-
+    
+        integer, intent(in) :: num_tracks
         real(dp) :: smass,frac_mcenv
         integer :: len_track, i, min_index, start
         real(dp), allocatable :: mass_list(:)
-
         logical:: debug
 
         debug = .false.
 
-        ! this way avoids Fortran runtime warning: An array temporary was created
         allocate(mass_list(size(xa)),source=xa% initial_mass)
         mass_list = pack(mass_list,mask = xa% complete.eqv..true.)
         
         Mcrit_he% mass= -1.d0
         Mcrit_he% loc = 0
 
-        Mcrit_he(1)% mass = xa(1)% initial_mass
+        Mcrit_he(1)% mass = mass_list(1)
         Mcrit_he(1)% loc = 1
 
 !        Mcrit_he(2)% mass =!very_low_mass_limit
@@ -1421,7 +1378,7 @@ module z_support
         Mcrit_he(7)% mass = Mec
         Mcrit_he(8)% mass = Mextra
         
-        Mcrit_he(9)% mass = xa(num_tracks)% initial_mass
+        Mcrit_he(9)% mass = mass_list(num_tracks)
         Mcrit_he(9)% loc = num_tracks+1
 
         write(out_unit,'(a,f7.1)') ' Minimum initial mass', Mcrit_he(1)% mass
@@ -1437,7 +1394,6 @@ module z_support
                     !temp at the end of HG/FGB <= temp at TAMS
                     if (xa(i)% tr(i_logTe,TPAGB_HE_EEP) .le. xa(i)% tr(i_logTe,TAMS_HE_EEP)) then
                         Mcrit_he(3)% mass = smass
-                        Mcrit_he(3)% loc = i
                         if (debug) print*,"Mhook",smass,i
                     endif
                 endif
@@ -1452,7 +1408,6 @@ module z_support
 
                     elseif(defined(Mcrit_he(4)% mass) .and. frac_mcenv.lt.0.12d0) then
                         Mcrit_he(5)% mass = smass
-                        Mcrit_he(5)% loc = i
                         if (debug) print*,"Mfgb2",smass,i
                     endif
                 endif
@@ -1462,7 +1417,6 @@ module z_support
             if (.not. defined(Mcrit_he(7)% mass))then
                 if (xa(i)% star_type == star_high_mass) then
                 Mcrit_he(7)% mass = smass
-                Mcrit_he(7)% loc = i
                 if (debug) print*,"Mec",smass,i
                 endif
             endif
@@ -1475,15 +1429,14 @@ module z_support
         do i = 2,size(Mcrit_he)-1
             if (Mcrit_he(i)% mass <= Mcrit_he(1)% mass) then
                 Mcrit_he(i)% mass= -1.d0
-                Mcrit_he(i)% loc = 0
             endif
         end do
         
-        !discrad old values, get actual locations for sa_he array
+        !Get actual locations for sa_he array
         do i = 2, size(Mcrit_he)-1
             if (.not. defined(Mcrit_he(i)% mass)) cycle
             call index_search (num_tracks, mass_list, Mcrit_he(i)% mass, min_index)
-            Mcrit_he(i)% mass = xa(min_index)% initial_mass
+            Mcrit_he(i)% mass = mass_list(min_index)
             Mcrit_he(i)% loc = min_index
         end do
         
