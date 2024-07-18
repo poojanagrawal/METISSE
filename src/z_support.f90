@@ -233,13 +233,13 @@ module z_support
         character(LEN=strlen), allocatable :: file_list(:)
         integer, intent(out) ::  ierr
 
-        character(LEN=strlen) :: str,find_cmd
+        character(LEN=strlen) :: str,cmd
         integer :: n,i, io
     
         ierr = 0
-        find_cmd = 'find '//trim(path)//'/*'//trim(extension)//' -maxdepth 1 > .file_name.txt'
+        cmd = 'find '//trim(path)//'/*'//trim(extension)//' -maxdepth 1 > .file_name.txt'
         
-        call system(find_cmd,ierr)
+        call system(cmd,ierr)
         if (ierr/=0) return
 
         io = alloc_iounit(ierr)
@@ -264,6 +264,11 @@ module z_support
 
         close(io)
         call free_iounit(io)
+        
+        
+        ! delete .filename.txt
+        cmd = 'rm .file_name.txt'
+        call system(cmd,ierr)
         
     end subroutine get_files_from_path
 

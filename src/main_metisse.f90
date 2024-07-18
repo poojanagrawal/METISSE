@@ -8,7 +8,7 @@ program metisse_main
     use z_support
 
     implicit none
-    integer:: ierr,i
+    integer:: ierr,i, io
     real(dp):: zpars(20)
     real(dp), allocatable :: mass_array(:)
 
@@ -29,8 +29,9 @@ program metisse_main
     mass_array = 0.0
 
     if (read_mass_from_file) then
+        io = alloc_iounit(ierr)
         !reads mass and age values from path for mass_file
-        open(101, FILE= trim(input_mass_file), action="read",iostat =ierr)
+        open(io, FILE= trim(input_mass_file), action="read",iostat =ierr)
         
         if (ierr/=0) then
             print*,'Erorr reading input masses from', trim(input_mass_file)
@@ -39,9 +40,10 @@ program metisse_main
         endif
         
         do i=1,number_of_tracks
-            read(101,*) mass_array(i)
+            read(io,*) mass_array(i)
         end do
-        close(101)
+        close(io)
+        call free_iounit(io)
     else
         if (number_of_tracks>1) then
             call uniform_distribution(number_of_tracks,min_mass,max_mass,mass_array)
@@ -69,7 +71,7 @@ program metisse_main
         if (ierr/=0) t_incomplete(i) = mass
     end do
     
-    if (verbose) print*,"Reached end of program"
+    if (verbose) print*,"Reached end of the program"
 
     t_notfound = pack(t_notfound, mask = t_notfound >0)
 

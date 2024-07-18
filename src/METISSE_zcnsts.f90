@@ -37,7 +37,8 @@ subroutine METISSE_zcnsts(z,zpars,path_to_tracks,path_to_he_tracks,ierr)
     
     if (allocated(sa) .eqv. .false.) then
         load_tracks = .true.
-        open(1000,file='tracks_log.txt',action='write',status='unknown')
+        out_unit = alloc_iounit(ierr)
+        open(out_unit,file='tracks_log.txt',action='write',status='unknown')
     else
         ! tracks have been loaded at least once, for initial_Z
         ! check if they need to be reloaded
@@ -100,9 +101,11 @@ subroutine METISSE_zcnsts(z,zpars,path_to_tracks,path_to_he_tracks,ierr)
     
     !Some unit numbers are reserved: 5 is standard input, 6 is standard output.
     if (verbose) then
-        out_unit = 6   !will write to screen
-    else
-        out_unit = 1000    !will write to file
+        ! close tracks_log.txt and reassign out_unit to
+        ! write output to screen
+        close(out_unit)
+        call free_iounit(out_unit)
+        out_unit = 6
     endif
     
     if (write_error_to_file) then
