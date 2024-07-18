@@ -929,8 +929,7 @@ module z_support
     end subroutine set_star_type_from_label
 
     subroutine check_tracks(num_tracks)
-    
-    integer :: n, abs_min_ntrack
+        integer :: n, abs_min_ntrack
         real(dp) :: co_core, he_core, min_val
         logical :: debug
         integer, intent(out):: num_tracks
