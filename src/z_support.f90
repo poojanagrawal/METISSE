@@ -233,13 +233,13 @@ module z_support
         character(LEN=strlen), allocatable :: file_list(:)
         integer, intent(out) ::  ierr
 
-        character(LEN=strlen) :: str,find_cmd
+        character(LEN=strlen) :: str,cmd
         integer :: n,i, io
     
         ierr = 0
-        find_cmd = 'find '//trim(path)//'/*'//trim(extension)//' -maxdepth 1 > .file_name.txt'
+        cmd = 'find '//trim(path)//'/*'//trim(extension)//' -maxdepth 1 > .file_name.txt'
         
-        call system(find_cmd,ierr)
+        call system(cmd,ierr)
         if (ierr/=0) return
 
         io = alloc_iounit(ierr)
@@ -264,6 +264,11 @@ module z_support
 
         close(io)
         call free_iounit(io)
+        
+        
+        ! delete .filename.txt
+        cmd = 'rm .file_name.txt'
+        call system(cmd,ierr)
         
     end subroutine get_files_from_path
 
@@ -829,8 +834,11 @@ module z_support
         if (Initial_EEP_HE < 0 .or. Initial_EEP_HE< minval(key_eeps_he)) Initial_EEP_HE = ZAMS_HE_EEP
         if (Final_EEP_HE < 0 .or. Final_EEP_HE > maxval(key_eeps_he)) Final_EEP_HE = maxval(key_eeps_he)
     
-        if(low_mass_final_eep<0 .or. low_mass_final_eep>final_eep_he) low_mass_eep_he = Final_EEP_HE
-        if(high_mass_final_eep<0 .or. low_mass_final_eep>final_eep_he) high_mass_eep_he = Final_EEP_HE
+        low_mass_eep_he = low_mass_final_eep
+        if(low_mass_eep_he<1 .or. low_mass_eep_he>final_eep_he) low_mass_eep_he = Final_EEP_HE
+        
+        high_mass_eep_he = high_mass_final_eep
+        if(high_mass_eep_he<1 .or. high_mass_eep_he>final_eep_he) high_mass_eep_he = Final_EEP_HE
         
 !        print*, 'eep he', Initial_EEP_he, final_eep_he, low_mass_eep_he, high_mass_eep_he
     end subroutine read_key_eeps_he

@@ -11,7 +11,7 @@ subroutine evolv_metisse(mass,max_age,ierr,id)
     integer, intent(out):: ierr
     integer, intent(in), optional :: id
 
-    integer :: str,lines,old_phase,idd
+    integer :: str,lines,old_phase,idd,io
     real(dp):: tphys,timestep,dt,dtr
     character(len=strlen) :: output_file
     logical :: output, t_end
@@ -54,13 +54,18 @@ subroutine evolv_metisse(mass,max_age,ierr,id)
     epoch = 0.d0
     
     !SSE like output file if write_track_to_file is true
-    output = write_track_to_file
-    if (output) write (output_file,"(a,a,i5.5,a)") trim(METISSE_DIR), "/output/evolve_", str, "M.dat"
-    if (output) open (120,FILE=trim(output_file),action="write")
-
-    if (output) write(120,'(9a15,2a10)') "time", "age", "mass","core_mass","He_core" &
-                ,"CO_core","log_L","log_Teff","log_radius", "phase","e"
-
+    
+    
+    if (write_track_to_file) then
+        output = .true.
+        io = alloc_iounit(ierr)
+        write (output_file,"(a,a,i5.5,a)") trim(METISSE_DIR), "/output/evolve_", str, "M.dat"
+        open (io,FILE=trim(output_file),action="write")
+        write(io,'(9a15,2a10)') "time", "age", "mass","core_mass","He_core" &
+                    ,"CO_core","log_L","log_Teff","log_radius", "phase","e"
+    endif
+    
+    
     do while(.true.)
         
 !       advance the time
@@ -93,9 +98,9 @@ subroutine evolv_metisse(mass,max_age,ierr,id)
         if (old_phase /=t% pars% phase .or. t_end) then
             if (verbose) write(*,'(a10,f10.1,3a10,f7.3)') "Time ", tphys, "Phase ", phase_label(t% pars% phase+1), &
                                                                                 "Mass ", t% pars% mass
-            if (output) call write_dat_track(tphys, t% pars)
+            if (output) call write_dat_track(tphys, t% pars,io)
         else if (lines<3000 .and. output) then
-            call write_dat_track(tphys,t% pars)
+            call write_dat_track(tphys,t% pars,io)
         endif
     
         if (t_end) exit
@@ -144,8 +149,11 @@ subroutine evolv_metisse(mass,max_age,ierr,id)
         endif
     end do
     
-    if (output) close(120)
-   
+    if (output) then
+        close(io)
+        call free_iounit(io)
+    endif
+    
     nullify(t)
     if (verbose) write(*,*) "-------------------------------------------------------------------------"
     return
