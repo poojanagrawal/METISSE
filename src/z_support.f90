@@ -500,7 +500,10 @@ module z_support
         
         !optional columns
         i_binding_energy = -1
-        if (binding_energy_colname /= '') i_binding_energy = locate_column(cols, binding_energy_colname, ierr)
+        if (binding_energy_colname /= '') then
+            i_binding_energy = locate_column(cols, binding_energy_colname)
+            ! find the binding energy column, convert it to unit log BE later
+        endif
 
         if (is_he_track) then
             if (co_core_radius/= '') i_he_RCO = locate_column(cols, co_core_radius)
@@ -972,6 +975,15 @@ module z_support
             if (log_R_colname == '') call make_logcolumn(xa(n), i_logR)
             if (log_T_colname == '') call make_logcolumn(xa(n), i_logTe)
             
+            if (i_binding_energy > 0) then
+                xa(n) % tr(i_binding_energy, :) = log10(- xa(n) % tr(i_binding_energy, :))
+                if (xa(n) % is_he_track .and. i_he_mcenv > 0) then
+                    xa(n) % tr(i_binding_energy, :) = xa(n) % tr(i_binding_energy, :) / xa(n) % tr(i_he_mcenv, :)
+                else if ((.not. xa(n) % is_he_track) .and. i_mcenv > 0) then
+                    xa(n) % tr(i_binding_energy, :) = xa(n) % tr(i_binding_energy, :) / xa(n) % tr(i_mcenv, :)
+                endif
+            endif
+
         end do
         
         num_tracks = count(xa% complete)
