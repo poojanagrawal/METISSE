@@ -834,8 +834,11 @@ module z_support
         if (Initial_EEP_HE < 0 .or. Initial_EEP_HE< minval(key_eeps_he)) Initial_EEP_HE = ZAMS_HE_EEP
         if (Final_EEP_HE < 0 .or. Final_EEP_HE > maxval(key_eeps_he)) Final_EEP_HE = maxval(key_eeps_he)
     
-        if(low_mass_final_eep<0 .or. low_mass_final_eep>final_eep_he) low_mass_eep_he = Final_EEP_HE
-        if(high_mass_final_eep<0 .or. low_mass_final_eep>final_eep_he) high_mass_eep_he = Final_EEP_HE
+        low_mass_eep_he = low_mass_final_eep
+        if(low_mass_eep_he<1 .or. low_mass_eep_he>final_eep_he) low_mass_eep_he = Final_EEP_HE
+        
+        high_mass_eep_he = high_mass_final_eep
+        if(high_mass_eep_he<1 .or. high_mass_eep_he>final_eep_he) high_mass_eep_he = Final_EEP_HE
         
 !        print*, 'eep he', Initial_EEP_he, final_eep_he, low_mass_eep_he, high_mass_eep_he
     end subroutine read_key_eeps_he
