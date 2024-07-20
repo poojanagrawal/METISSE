@@ -61,5 +61,23 @@ html_theme = 'sphinx_rtd_theme'
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
+html_css_files = [
+    'custom.css',
+]
+
 # set default highlighting language
 highlight_language = 'fortran'
+
+
+# Use LaTeX to generate PDF output (optional)
+latex_engine = 'pdflatex'
+
+
+# Additional options for LaTeX output (optional)
+latex_elements = {
+    'preamble': r'''
+        \usepackage{amsmath,amssymb,amsfonts,amsthm}
+        \usepackage{graphicx}
+        \usepackage{babel}
+    ''',
+}

@@ -13,8 +13,7 @@ subroutine METISSE_gntage(mc,mt,kw,zpars,m0,aj,id)
     logical :: debug
     
     debug = .false.
-    if (debug)write(UNIT=err_unit,fmt=*) 'in gntage',kw,m0,mt,mc,aj,id
-!    write(UNIT=*,fmt=*) 'in gntage',kw,m0,mt,mc,aj,id
+    if(debug) write(*,*) 'in gntage',kw,m0,mt,mc,aj,id
 
     if (kw>7 .and. use_sse_NHe)  then
         CALL SSE_gntage(mc,mt,kw,zpars,m0,aj,id)
@@ -33,7 +32,7 @@ subroutine METISSE_gntage(mc,mt,kw,zpars,m0,aj,id)
     ! below simplification avoids error in length
     if(mt<Mmin_array(TA_cHeB_EEP) .and. kw>1 .and. kw<7) then != very_low_mass_limit
         mt = Mmin_array(TA_cHeB_EEP)
-!        print*,mt,mt0
+        if(debug) write(*,*)'Changed mass in gntage:',mt,mt0
     endif
     
     !this is just to signal star that gnatge is calling it
@@ -158,8 +157,7 @@ subroutine METISSE_gntage(mc,mt,kw,zpars,m0,aj,id)
 
     nullify(t)
     
-    if (debug)write(UNIT=err_unit,fmt=*)'exit gntage',kw,m0,mt,mc,aj
-!    write(UNIT=*,fmt=*)'exit gntage',kw,m0,mt,mc,aj
+    if (debug)write(*,*)'exit gntage',kw,m0,mt,mc,aj
 
 end subroutine METISSE_gntage
 

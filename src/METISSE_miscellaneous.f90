@@ -26,7 +26,7 @@ subroutine initialize_front_end(front_end_name)
         front_end = COSMIC
         
     else
-        print*, "Error: Unrecongnized front_end_name for METISSE"
+        print*, "METISSE error: Unrecongnized front_end_name for METISSE"
         print*, "Choose from 'MAIN', 'SSE', 'BSE', 'COSMIC' "
     endif
     
@@ -52,6 +52,7 @@ subroutine allocate_track(n,mass)
     tarr% ierr = 0
     tarr% pars% dms = 0.d0
     tarr% pars% delta = 0.d0
+    tarr% reju = .false.
     
 end subroutine allocate_track
 
@@ -63,16 +64,17 @@ subroutine dealloc_track()
     integer:: n,i
 
     n = size(tarr)
+    
 !    print*," deallocating", n
-!    n = 1
+
     do i = 1,n
-!        deallocate(tarr(i)% times_new)
-!        deallocate(tarr(i)% times)
         deallocate(tarr(i)% eep)
         deallocate(tarr(i)% tr)
         deallocate(tarr(i)% cols)
         deallocate(tarr(i)% bounds)
-        if((tarr(i)% ierr/=0).and.verbose) write(UNIT=err_unit,fmt=*)'Error in evolving the system',i
+        if((tarr(i)% ierr/=0).and.verbose) write(UNIT=err_unit,fmt=*)'METISSE: error in evolving the system',i
+
+    code_error = .false.
 
     end do
     deallocate(tarr)
@@ -88,5 +90,6 @@ subroutine set_star_type(id)
 !        print*, 'setting star to reju',tarr(id)% pars% age,id
 
         tarr(id)% star_type = rejuvenated
+        tarr(id)% reju = .true.
 end subroutine set_star_type
 

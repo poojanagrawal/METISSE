@@ -49,7 +49,7 @@
         endif
 
         if (mc_max<=0.d0 .or. mc_threshold<=0.d0) then
-            write(UNIT=err_unit,fmt=*)"Fatal error: non-positive core mass",mc_max, mc_threshold
+            write(UNIT=err_unit,fmt=*)"METISSE error: non-positive core mass",mc_max, mc_threshold
             code_error = .true.
             !assigning an ad-hoc non-zero core mass so the code doesn't break
             !TODO: fix very low-mass stars that form hewd and may get caught in this
@@ -71,6 +71,23 @@
         
         end function check_remnant_phase
         
+        
+        subroutine check_early_end(t,dt_hold,id)
+            real(dp) :: dt_hold
+            type(track), pointer :: t
+            integer :: id
+
+            if (t% ierr/=0) return
+
+            if ((t% initial_mass.gt.very_low_mass_limit).and. (dt_hold.le.t% pars% dt).and.(t% reju.eqv. .false.)) then
+                write(UNIT=err_unit,fmt=*) 'WARNING: Early end of file at phase, mass and id',&
+                t% pars% phase,t% initial_mass,id,t% reju
+                t% ierr = -1
+!                    call stop_code
+            endif
+                
+        end subroutine check_early_end
+                
         
         subroutine assign_remnant_METISSE(pars, mcbagb)
             implicit none
@@ -610,8 +627,6 @@
               tau = (aj - tscls(2))/tscls(3)     !tau = (aj - t_HeI)/t_He
               rx = radius_He_ZAMS(mc)
               !Following is akin to rzhef of SSE
-              !TODO: following two lines may cause dt error
-              ! might need interpolation
               am = MAX(0.d0,0.4d0-0.22d0*LOG10(mc))
               rc = rx*(1.d0+am*(tau-tau**6))
          case(EAGB)
@@ -678,10 +693,6 @@
                 rg = 10**rg
                 
                 rg = max(rg, t% pars% radius )
-!                if (rg .lt. t% pars% radius) then
-!                    write(UNIT=err_unit,fmt=*)'Error in calculate_rg: Rg, R',rg,t% pars% radius,Rbgb, Rbagb
-!                    write(UNIT=err_unit,fmt=*) t% pars% age, alfa, L, Lbgb, Lbagb
-!                endif
                     
             case(EAGB:TPAGB)
                 rg = t% pars% radius
@@ -715,20 +726,21 @@
         type(track),pointer, intent(in) :: t
         real(dp), intent (in) :: lums(10)
         real(dp), intent(out) :: menv,renv,k2
-        integer :: rcenv_col, mcenv_col, moi_col
+        integer :: rcenv_col, mcenv_col!, moi_col
         real(dp) :: rc, rg,rzams,rtms
     
+
         if (t% is_he_track) then
             mcenv_col = i_he_mcenv
             rcenv_col = i_he_rcenv
-            moi_col = i_he_MoI
+!            moi_col = i_he_MoI
 
             rzams = 10.d0**t% tr(i_logR, ZAMS_HE_EEP)
             rtms = 10.d0**t% tr(i_logR, TAMS_HE_EEP)
         else
             mcenv_col = i_mcenv
             rcenv_col = i_rcenv
-            moi_col = i_MoI
+!            moi_col = i_MoI
             rzams = 10.d0**t% tr(i_logR, ZAMS_EEP)
             rtms = 10.d0**t% tr(i_logR, TAMS_EEP)
         endif
@@ -739,11 +751,15 @@
         
         rc = t% pars% core_radius  ! it's calculated in hrdiag
         
-        if ((.not. identified(mcenv_col)) .or. (.not. identified(rcenv_col)) .or. (.not. identified(moi_col)) .or. t% post_agb) then
+        if (t% post_agb .or. (mcenv_col<1) .or. (rcenv_col<1)) then
+            ! .or. (moi_col<1)
+            !inertia calculations involving moi column have issues
+            
             CALL calculate_rg(t,rg)
             CALL mrenv(t% pars% phase,t% zams_mass,t% pars% mass,t% pars% core_mass, &
             t% pars% luminosity,t% pars% radius,rc,t% pars% age,t% MS_time,lums(2),lums(3),&
             lums(4),rzams,rtms,rg,menv,renv,k2)
+            
         endif
         
         if (mcenv_col>0) then
@@ -766,7 +782,10 @@
         renv = MAX(renv,1.0d-10)
         ! radius of gyration, k2 given by sqrt(I/M*R*R)
 !        if (moi_col>0) k2 = sqrt((t% pars% moi)/(t% pars% mass*t% pars% radius*t% pars% radius))
-!        k2 = 0.21d0
+!        moi is for whole star, k2 is only for core
+!        setting k2 to 0.1 following equation 35 of hurley et al. 2002
+        
+        k2 = 0.1d0
     
     end subroutine
 

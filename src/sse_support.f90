@@ -87,7 +87,7 @@ module sse_support
     lums(4) = lums(3)
     lums(5) = t% tr(i_logL,cHeBurn_EEP)
     lums(7) = t% tr(i_logL,TA_cHeB_EEP)
-    lums(8) = t% tr(i_logL,TPAGB_EEP)
+    if (TPAGB_EEP >1) lums(8) = t% tr(i_logL,TPAGB_EEP)
 
     if (t% j_bgb0 >1) lums(3) = t% tr(i_logL,t% j_bgb0)
 

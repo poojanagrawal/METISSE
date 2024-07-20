@@ -11,11 +11,9 @@ subroutine evolv_metisse(mass,max_age,ierr,id)
     integer, intent(out):: ierr
     integer, intent(in), optional :: id
 
-
-    !type(track), target :: t
-    integer :: str,lines,old_phase,idd
+    integer :: str,lines,old_phase,idd,io
     real(dp):: tphys,timestep,dt,dtr
-    character(len=strlen) :: output_file,eep_filename
+    character(len=strlen) :: output_file
     logical :: output, t_end
     real(dp) :: dms, M_env,dml,x
     type(track), pointer :: t
@@ -23,8 +21,7 @@ subroutine evolv_metisse(mass,max_age,ierr,id)
 
     ! dummy variables for bse/ sse
     real(dp) :: mt,tm,tn,tscls(20),lums(10),GB(10),zpars(20)
-    real(dp) :: mc,rc,menv,renv,k2,mcx,r,lum,epoch,age
-    integer :: kw
+    real(dp) :: mc,rc,menv,renv,k2,mcx,r,lum,epoch
     
     idd = 1
     if(present(id)) idd = id
@@ -35,38 +32,40 @@ subroutine evolv_metisse(mass,max_age,ierr,id)
     ierr = 0
     timestep = 0.d0
     mt = mass
-    kw = 1
+    t% pars% phase = 1
     tscls = 0.d0
     lums = 0.d0
     GB = 0.d0
     tm = 0.d0
     tn = 0.d0
     str = int(mass*100)
-    call METISSE_star(kw,mass,mt,tm,tn,tscls,lums,GB,zpars,timestep,id)
+    call METISSE_star(t% pars% phase,mass,mt,tm,tn,tscls,lums,GB,zpars,timestep,id)
 
     if (t% complete .eqv..false.) ierr = 1
 
   !write the mass interpolated track if write_eep_file is true
-    if (write_eep_file) then
-        write(eep_filename,"(a,a,i5.5,a)") trim(METISSE_DIR),"/output/",str,"M_full.track.eep"
-        call write_eep_track(t,mass,eep_filename)
-    end if
+    if (write_eep_file) call write_eep_track(t,mass)
 
     lines = 0
     tphys = 0.d0
     timestep = 0.d0
     old_phase = -1
-    t_end  = .false.
+    t_end = .false.
     epoch = 0.d0
     
     !SSE like output file if write_track_to_file is true
-    output = write_track_to_file
-    if (output) write (output_file,"(a,a,i5.5,a)") trim(METISSE_DIR), "/output/evolve_", str, "M.dat"
-    if (output) open (120,FILE=trim(output_file),action="write")
-
-    if (output) write(120,'(9a15,2a10)') "time", "age", "mass","core_mass","He_core" &
-                ,"CO_core","log_L","log_Teff","log_radius", "phase","e"
-
+    
+    
+    if (write_track_to_file) then
+        output = .true.
+        io = alloc_iounit(ierr)
+        write (output_file,"(a,a,i5.5,a)") trim(METISSE_DIR), "/output/evolve_", str, "M.dat"
+        open (io,FILE=trim(output_file),action="write")
+        write(io,'(9a15,2a10)') "time", "age", "mass","core_mass","He_core" &
+                    ,"CO_core","log_L","log_Teff","log_radius", "phase","e"
+    endif
+    
+    
     do while(.true.)
         
 !       advance the time
@@ -74,10 +73,13 @@ subroutine evolv_metisse(mass,max_age,ierr,id)
 
         !evolve the star- calculate stellar parameters at tphys
         t% pars% age = tphys - epoch
-        age = t% pars% age
         
-        call METISSE_hrdiag(mass,age,mt,tm,tn,tscls,&
-            lums,GB,zpars,r,lum,kw,mc,rc,menv,renv,k2,mcx,id)
+        if (use_sse_NHe.eqv..false. .and.t% pars% phase >= He_MS) then
+            t% pars% age = t% pars% age - t% pars% age_old+1d-12
+        endif
+        
+        call METISSE_hrdiag(mass,t% pars% age,mt,tm,tn,tscls,&
+            lums,GB,zpars,r,lum,t% pars% phase,mc,rc,menv,renv,k2,mcx,id)
         
          if (t% pars% phase>6 .or. t% post_agb) then
             t% pars% log_L = log10(t% pars% luminosity)
@@ -96,18 +98,18 @@ subroutine evolv_metisse(mass,max_age,ierr,id)
         if (old_phase /=t% pars% phase .or. t_end) then
             if (verbose) write(*,'(a10,f10.1,3a10,f7.3)') "Time ", tphys, "Phase ", phase_label(t% pars% phase+1), &
                                                                                 "Mass ", t% pars% mass
-            if (output) call write_dat_track(tphys, t% pars)
+            if (output) call write_dat_track(tphys, t% pars,io)
         else if (lines<3000 .and. output) then
-            call write_dat_track(tphys,t% pars)
+            call write_dat_track(tphys,t% pars,io)
         endif
     
         if (t_end) exit
          
         lines = lines+1
         old_phase = t% pars% phase
-       
+
         !calculate next time step
-        call METISSE_deltat(id,age,dt,dtr)
+        call METISSE_deltat(id,t% pars% age,dt,dtr)
         timestep = min(dt,dtr)
         
         ! only for SSE_he stars
@@ -125,6 +127,7 @@ subroutine evolv_metisse(mass,max_age,ierr,id)
 
             dms = MAX(dms,dml)
             dms = dms *1.0d+06*timestep
+            
             M_env = mt - t% pars% core_mass
             if(dms.ge.M_env)then
                 timestep = (M_env/dms)*timestep
@@ -144,11 +147,13 @@ subroutine evolv_metisse(mass,max_age,ierr,id)
             endif
             t% pars% mass = mt
         endif
-        
     end do
     
-    if (output) close(120)
-   
+    if (output) then
+        close(io)
+        call free_iounit(io)
+    endif
+    
     nullify(t)
     if (verbose) write(*,*) "-------------------------------------------------------------------------"
     return
