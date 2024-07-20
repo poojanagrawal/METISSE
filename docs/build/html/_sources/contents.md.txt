@@ -64,14 +64,3 @@ A combination of these files is used depending on how METISSE is being used.
 | comenv_lambda.f90   | Get appropriate ZAMS radius and calculate common envelope lambda.                                       |
 
 
-
-# Flowchart
-
-Here is a flowchart describing the workflow of METISSE:
-
-
-
-
-![METISSE's flowchart](METISSE_flowchart.png)
-
-
