@@ -3,7 +3,7 @@
 
 Presently, METISSE can be used with the following codes: 
 
-1. BSE (Hurley et al. 2002)
+## BSE (Hurley et al. 2002)
 
 To run METISSE with BSE, download the METISSE enabled version of BSE from [here](https://github.com/poojanagrawal/BSE-METISSE) and set `use_SSE = .false.` in the `bse.f` or `popbin.f`. 
 
@@ -21,7 +21,7 @@ For a grid of stellar tracks, containing sets of stellar tracks with different m
 If helium EEP tracks are not provided, METISSE will revert to using SSE formulae for the evolution of the naked helium stars.
 
 
-2. COSMIC (Breivik et al. 2020) 
+## COSMIC (Breivik et al. 2020) 
 
 Running METISSE with COSMIC requires additional code from [COSMIC](https://github.com/COSMIC-PopSynth/COSMIC).
 
@@ -38,4 +38,4 @@ SSEDict = {'stellar_engine': 'metisse', 'path_to_tracks': path_to_tracks, 'path_
 
 Here too, if `path_to_he_tracks` is empty, METISSE will revert to using SSE formulae for the evolution of the naked helium stars.
 
-<!--## Example-->
+
