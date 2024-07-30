@@ -940,6 +940,10 @@ module z_support
         real(dp) :: co_core, he_core, min_val
         logical :: debug
         integer, intent(out):: num_tracks
+        real(dp), allocatable, dimension(:) :: core_mass
+        real(dp), allocatable, dimension(:) :: sgn
+
+        ! integer :: critical_eep
         
         ! checks for the completeness of the tracks
         ! and whether their core masses are correct or not
@@ -975,12 +979,35 @@ module z_support
             if (log_R_colname == '') call make_logcolumn(xa(n), i_logR)
             if (log_T_colname == '') call make_logcolumn(xa(n), i_logTe)
             
+            ! store core mass for processing binding energy
+            allocate(core_mass(size(xa(n) % tr, 2)))
+            allocate(sgn(size(xa(n) % tr, 2)))
+            if ( xa(n) % is_he_track ) then
+                core_mass(:) = xa(n) % tr(i_co_core, :)
+            else if ( xa(n) % star_type == star_high_mass ) then
+                if (cCBurn_EEP > xa(n) % ntrack) then
+                    core_mass(:) = xa(n) % tr(i_he_core, :)
+                else
+                    core_mass(: cCBurn_EEP-1) = xa(n) % tr(i_he_core, : cCBurn_EEP-1)
+                    core_mass(cCBurn_EEP :) = xa(n) % tr(i_co_core, cCBurn_EEP :)
+                endif
+            else
+                if (TPAGB_EEP > xa(n) % ntrack) then
+                    core_mass(:) = xa(n) % tr(i_he_core, :)
+                else
+                    core_mass(: TPAGB_EEP-1) = xa(n) % tr(i_he_core, : TPAGB_EEP-1)
+                    core_mass(TPAGB_EEP :) = xa(n) % tr(i_co_core, TPAGB_EEP :)
+                endif
+            end if
+            
             ! store log(binding energy) per envelope mass
             if (i_binding_energy > 0) then
-                xa(n) % tr(i_binding_energy, :) = log10(- xa(n) % tr(i_binding_energy, :))
-                xa(n) % tr(i_binding_energy, :) = xa(n) % tr(i_binding_energy, :) / (xa(n) % tr(i_mass, :) - xa(n) % tr(i_he_core, :))
+                sgn(:) = xa(n) % tr(i_binding_energy, :) / abs(xa(n) % tr(i_binding_energy, :))
+                xa(n) % tr(i_binding_energy, :) = sgn * log10( abs(xa(n) % tr(i_binding_energy, :)) )
+                xa(n) % tr(i_binding_energy, :) = xa(n) % tr(i_binding_energy, :) / ( xa(n) % tr(i_mass, :) - core_mass(:) )
             endif
-
+            deallocate(sgn)
+            deallocate(core_mass)
         end do
         
         num_tracks = count(xa% complete)
