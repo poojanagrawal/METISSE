@@ -896,13 +896,17 @@ module interp_support
         endif
 
         if (i_binding_energy > 0) then 
-            pars % binding_energy = new_line(i_binding_energy, 1)
-            env_mass = pars % mass - pars % core_mass
-            if (env_mass < 10.0**(-10.0)) then  ! catch if env_mass = 0
-                sgn = (pars % binding_energy * env_mass) / abs(pars % binding_energy * env_mass)
-                pars % binding_energy =  sgn * 10 ** ( abs(pars % binding_energy * env_mass) )
+            env_mass = (pars % mass) - (pars % core_mass)
+            if (pars % phase >= HeWD) then
+                pars % binding_energy = 0.00
             else 
-                pars % binding_energy = 0
+                if (env_mass >= 10.0**(-5.0)) then  ! catch if env_mass = 0
+                    pars % binding_energy = new_line(i_binding_energy, 1)
+                    sgn = (pars % binding_energy * env_mass) / abs(pars % binding_energy * env_mass)
+                    pars % binding_energy =  sgn * 10 ** ( abs(pars % binding_energy * env_mass) )
+                else 
+                    pars % binding_energy = 0.00
+                endif
             endif
         endif
             
