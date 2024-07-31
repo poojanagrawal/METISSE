@@ -871,11 +871,6 @@ module interp_support
         pars% radius = 10**pars% log_R
         pars% core_radius = -1.0
         
-        if (i_binding_energy > 0) then 
-            pars % binding_energy = new_line(i_binding_energy, 1)
-            pars % binding_energy =  - 10 ** (pars % binding_energy * (pars % mass - pars % McHe))
-        endif
-        
         if (pars% phase <= TPAGB) then
             if (pars% phase == TPAGB ) then
                 pars% core_mass = pars% McCO
