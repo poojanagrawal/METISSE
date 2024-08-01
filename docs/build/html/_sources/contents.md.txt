@@ -1,16 +1,14 @@
-# Package contents
+# Code structure
 
 
-All the programs and subroutines are written in Modern Fortran. 
+METISSE has been written completely using Modern Fortran. 
+The source code contains two types of files located in the *src* directory: 
 
-
-
-The METISSE package contains two types of files in the source (*src*) directory: 
 
 ## SSE specific subroutines 
 
 
-METISSE has been developed as an alternative to SSE (Hurley et al. 2000) and, therefore, contains similar subroutines as SSE. The following subroutines replicate the behaviour of the SSE subroutines externally, with similar names and input/output variables.
+METISSE has been developed as an alternative to SSE[(Hurley et al. 2000)](https://ui.adsabs.harvard.edu/abs/2000MNRAS.315..543H/abstract) code and, therefore, contains similar subroutines as SSE. The following subroutines replicate the behaviour of the SSE subroutines externally, with similar names and input/output variables.
 
 | File Name           | Description                                                                                             |
 |---------------------|---------------------------------------------------------------------------------------------------|
@@ -25,7 +23,7 @@ METISSE has been developed as an alternative to SSE (Hurley et al. 2000) and, th
 
 ## Modules and other files
 
-The following Fortran modules contain more general data structures and subroutines specific to METISSE that can be accessed by SSE-specific subroutines as required. 
+The following Fortran modules contain more general data structures and subroutines specific to METISSE. These can be accessed by SSE-specific subroutines as required. 
 
 | File Name           | Description                                                                                             |
 |---------------------|---------------------------------------------------------------------------------------------------|
@@ -62,5 +60,29 @@ A combination of these files is used depending on how METISSE is being used.
 |---------------------|---------------------------------------------------------------------------------------------------------|
 | assign_commons_xyz.f90  | To assign common variables when METISSE is used with other code say 'xyz'.                               |
 | comenv_lambda.f90   | Get appropriate ZAMS radius and calculate common envelope lambda.                                       |
+
+## Workflow
+
+For a given initial mass, an evolutionary track is calculated by interpolating between the corresponding EEPs of neighboring mass tracks. The interpolation is either linear or monotonic piece-wise cubic, depending on the number of tracks available in the neighborhood. The resulting track is a collection of stellar parameters at each EEP. METISSE further interpolates within the mass-interpolated track to calculate stellar parameters at any instant.
+
+Here is a flowchart describing the workflow of METISSE:
+
+![METISSE's flowchart](METISSE_flowchart.png)
+   
+
+
+<!-- # module details
+
+All kinds tracks in METISSE are stored in Fortran's derived data type (think class in python/c++) called track  which is defined in track_support. It mostly has two components : a header part (e.g. initial_mass, ntrack etc.)  and an array tr which stores file data as an array.  xa, sa, sa_he and tarr  all belong to this type.
+xa is a temporary variable. We read all the input data through it and, filter whatever we need and store it either in sa (hydrogen tracks) or sa_he (helium tracks).
+tarr is special; it is where we store interpolated tracks. It also makes use some other feature of track such as pars which stores stellar parameters at any given age.
+
+First index of tr is denoters the column, and second denotes row.  Different EEPs actually are row numbers. so in tr, each row is like a time, which corresponds to an evolutionary stage. TPAGB_EEP and cCBurn_EEP let us know from which row/time it enters these stages. 
+
+
+
+
+For reading input data in xa, we have two kind of functions. One is specific to filetype used by Choi et al. 2016 (MIST-EEP files) and other is more general. However they both do the same thing; read file and store header data and tr for each element of xa.  However, at first call they also identify various columns and their locations, controlled by the variable get_columns. These columns are identified by calling the subroutine get_named_columns. After xa is read, tracks are checked for errors through check_tracks . For complete tracks, we check here if any column needs to be converted to log within this subroutine.  We next find zparameters/mcrit/mcutoff using xa (See METISSE's 2020 paper for their definition). Finally we use copy_and_deallocatex to store only the relevant information in sa or sa_he.  We also do other some other checks and set what we call key_cols , where essential columns get reassigned to match to reduced array format of sa/sa_he. -->
+
 
 
