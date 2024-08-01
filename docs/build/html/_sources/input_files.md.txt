@@ -1,13 +1,19 @@
-# Input Files 
+# Input files
 
-In the standalone mode, inputs to METISSE are provided using the Fortran namelists `SSE_input_controls` contained in the *main.input* and `METISSE_input_controls` contained in the *metisse.input*. 
+Inputs to METISSE are provided using the following [Fortran namelists](acronyms_definitions.md#fortran-namelists):
 
-For the most up-to-date variable names and their default values refer to [main_defaults](https://github.com/TeamMETISSE/METISSE/blob/develop/src/defaults/main_defaults.inc)   and [metisse_defaults](https://github.com/TeamMETISSE/METISSE/blob/develop/src/defaults/metisse_defaults.inc). 
-**Never modify any file inside the defaults folder**.
 
-## SSE_input_controls
 
-This namelist contains input parameters describing the initial conditions of the star/stellar populations. This namelist is only read in METISSE's standalone mode. When METISSE is used with other codes, the input parameters from the overlying code are utilized.
+## SSE input controls
+
+`SSE_input_controls` is holds input parameters describing the initial conditions of the star/stellar populations. For the most up-to-date variable names and their default values refer to [main_defaults](https://github.com/TeamMETISSE/METISSE/blob/develop/src/defaults/main_defaults.inc).
+
+:::{Note}
+`main.input` is **only** read in METISSE's standalone mode. 
+When METISSE is used with other codes, the input parameters from the overlying code are used.
+:::
+
+
 
 ### EVOLUTION CONTROLS
 
@@ -35,6 +41,9 @@ max_age = -1.0
 
     
 ### REMNANT CONTROLS
+
+
+
 | Variable name                 | Description |
 |-------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | WD_mass_scheme                | White Dwarf (WD) luminosity calculation method:<br>(1) "Mestel" - [Shapiro S. L., Teukolsky S. A., 1983](https://ui.adsabs.harvard.edu/abs/1983bhwd.book.....S/abstract)<br>(2) "Modified_mestel" - [Hurley J. R., Shara M. M., 2003, ApJ, 589, 179](https://iopscience.iop.org/article/10.1086/374637)                                                                                               |
@@ -52,7 +61,10 @@ max_NS_mass = 3.d0
 allow_electron_capture = .true.  
 ```
 ### TIMESTEP CONTROLS
-Similar to SSE, METISSE determines timesteps as the fractions of the time spent in a phase
+
+Similar to SSE, METISSE determines timesteps as the fractions of the time spent in a phase.
+
+
 | Variable name                 | Description |
 |-------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | pts_1                         | 95% of MS, HeMS. Default is 0.05
@@ -66,30 +78,32 @@ pts_2 = 0.01
 pts_3 = 0.02
 ```
 
-### OUTPUT CONTROLS
+### OTHER CONTROLS
 | Variable name                 | Description |
 |-------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | write_track_to_file           | <br> Generate an SSE-style output file (file ending in .dat) at the END of the evolution. <br> Default is false|
 
 ```
-! OUTPUT CONTROLS
+
 write_output_to_file = .false.
 ```
 
 
-## METISSE_input_controls
+## METISSE input controls
 
 `METISSE_input_controls` contains input parameters specific to METISSE. 
+
+For the most up-to-date variable names and their default values refer to [metisse_defaults](https://github.com/TeamMETISSE/METISSE/blob/develop/src/defaults/metisse_defaults.inc). 
+
 
 ### TRACK CONTROLS
 
 
 | Variable name   | Description  |
 |-----------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| tracks_dir      | <br> Path for providing location of the metallicity files. Metallicity files end with *metallicity.in* and  <br> contain details about sets of input tracks for hydrogen stars,  including their metallicity values and other metadata. <br> METISSE will raise an error if `tracks_dir` is an empty string.                                                                                                                                       |
+| tracks_dir      | <br> Path for providing location of the metallicity files. Metallicity files end with *metallicity.in* and  <br> contain details about sets of input tracks for hydrogen stars,  including their metallicity values and other metadata. <br> METISSE will stop and raise error if `tracks_dir` is an empty string.                                                                                                                                       |
 | tracks_dir_he   | <br> Similar to `tracks_dir` but for providing details about sets of input tracks for naked helium/stripped stars. <br>If `tracks_dir_he` is an empty string, SSE fitting formulae or naked helium stars are used.                                                                                                                                      |
-| Z_accuracy_limit| <br> METISSE checks for a match in metallicity based on the condition <br> `(abs(Z_input - Z_required) / MIN(Z_input, Z_required)) > Z_accuracy_limit`, <br> where `Z_input` is the metallicity value of the tracks (from the metallicity file)<br>   and `Z_required` is the desired value. The default `Z_accuracy_limit` is set to 1e-2.                                                                                                        |
-
+| Z_accuracy_limit| <br> METISSE checks for a match in metallicity based on the condition <br> `(abs(Z_input - Z_required) / MIN(Z_input, Z_required)) > Z_accuracy_limit`, <br> where `Z_input` is the metallicity value of the tracks (from the metallicity file)<br>   and `Z_required` is the desired value. The default `Z_accuracy_limit` is set to `1d-2`.                                                                                                        |
 
 ```
 ! TRACK CONTROLS
@@ -123,34 +137,6 @@ write_error_to_file = .true.
 mass_accuracy_limit = 1d-4
 construct_wd_track = .true.
 ```
-
-
-# Output Files
-
-METISSE can produce two types of output files:
-
-## SSE-style output files: 
-
-SSE-style output files, which are files ending with .dat, are controlled by the `write_output_to_file` function in SSE_input_controls. They contain stellar parameters up to the maximum age. Time and age at hydrogen ZAMS are assumed to be zero. 
-*These files can only be created in standalone mode.*
-
-
-| Column Header | Description |
-|-----------------|-----------------|
-| time | Physical time [Myr] |
-| age | Age of star [Myr] |
-| mass | Current mass of the star [M$_\odot$] |
-| core_mass | Mass of dominant core [M$_\odot$] |
-| He_core | Mass of helium core [M$_\odot$] |
-| CO_core | Mass of carbon-oxygen core [M$_\odot$] |
-| log_L | Log of surface luminosity [L$_\odot$] |
-| log_Teff | Log of effective temperature [K] |
-| log_radius | Log of radius [R$_\odot$] |
-| phase | SSE stellar type/phase |
-
-## MIST-style file: 
-
-MIST-style files, which end with .eep, are produced for debugging purposes. METISSE can write a mass-interpolated track to an output file with the same columns as input files, including a phase column. This output file only contains data from ZAMS to the end of nuclear-burning phases and does not include information about the remnant phase. It is controlled by the `write_eep_file` function in METISSE_input_controls.
 
 
 

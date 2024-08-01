@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Input Files &mdash; METISSE 0.1 documentation</title>
+  <title>Input files &mdash; METISSE 0.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
       <link rel="stylesheet" type="text/css" href="_static/custom.css?v=058af07a" />
@@ -22,8 +22,8 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Using METISSE with other codes" href="usage_other.html" />
-    <link rel="prev" title="Acronyms and definitions" href="glossary.html" /> 
+    <link rel="next" title="Using custom input tracks" href="using_custom_input_tracks.html" />
+    <link rel="prev" title="Using METISSE to evolve binaries" href="usage_other.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -46,35 +46,29 @@
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="citation.html">Citing METISSE</a></li>
-<li class="toctree-l1"><a class="reference internal" href="contents.html">Package contents</a></li>
-<li class="toctree-l1"><a class="reference internal" href="download.html">Downloading METISSE</a></li>
-<li class="toctree-l1"><a class="reference internal" href="glossary.html">Acronyms and definitions</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Input Files</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#sse-input-controls">SSE_input_controls</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage_standalone.html">Using METISSE to evolve single stars</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage_other.html">Using METISSE to evolve binaries</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Input files</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#sse-input-controls">SSE input controls</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#evolution-controls">EVOLUTION CONTROLS</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#remnant-controls">REMNANT CONTROLS</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#timestep-controls">TIMESTEP CONTROLS</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#output-controls">OUTPUT CONTROLS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#other-controls">OTHER CONTROLS</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#metisse-input-controls">METISSE_input_controls</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#metisse-input-controls">METISSE input controls</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#track-controls">TRACK CONTROLS</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id1">OUTPUT CONTROLS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#output-controls">OUTPUT CONTROLS</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#miscellaneous-controls">MISCELLANEOUS CONTROLS</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="#output-files">Output Files</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#sse-style-output-files">SSE-style output files:</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#mist-style-file">MIST-style file:</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="usage_other.html">Using METISSE with other codes</a></li>
-<li class="toctree-l1"><a class="reference internal" href="usage_standalone.html">Using METISSE as a standalone code</a></li>
-<li class="toctree-l1"><a class="reference internal" href="using_custom_input_tracks.html">Custom input tracks</a></li>
-<li class="toctree-l1"><a class="reference internal" href="workflow.html">Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="using_custom_input_tracks.html">Using custom input tracks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contents.html">Code structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="citing_metisse.html">Citing METISSE</a></li>
+<li class="toctree-l1"><a class="reference internal" href="acronyms_definitions.html">Acronyms and definitions</a></li>
 </ul>
 
         </div>
@@ -91,7 +85,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Input Files</li>
+      <li class="breadcrumb-item active">Input files</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/input_files.md.txt" rel="nofollow"> View page source</a>
       </li>
@@ -101,16 +95,19 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="input-files">
-<h1>Input Files<a class="headerlink" href="#input-files" title="Link to this heading"></a></h1>
-<p>In the standalone mode, inputs to METISSE are provided using the Fortran namelists <code class="docutils literal notranslate"><span class="pre">SSE_input_controls</span></code> contained in the <em>main.input</em> and <code class="docutils literal notranslate"><span class="pre">METISSE_input_controls</span></code> contained in the <em>metisse.input</em>.</p>
-<p>For the most up-to-date variable names and their default values refer to <a class="reference external" href="https://github.com/TeamMETISSE/METISSE/blob/develop/src/defaults/main_defaults.inc">main_defaults</a>   and <a class="reference external" href="https://github.com/TeamMETISSE/METISSE/blob/develop/src/defaults/metisse_defaults.inc">metisse_defaults</a>.
-<strong>Never modify any file inside the defaults folder</strong>.</p>
+  <section class="tex2jax_ignore mathjax_ignore" id="input-files">
+<h1>Input files<a class="headerlink" href="#input-files" title="Link to this heading"></a></h1>
+<p>Inputs to METISSE are provided using the following <a class="reference internal" href="acronyms_definitions.html#fortran-namelists"><span class="std std-ref">Fortran namelists</span></a>:</p>
 <section id="sse-input-controls">
-<h2>SSE_input_controls<a class="headerlink" href="#sse-input-controls" title="Link to this heading"></a></h2>
-<p>This namelist contains input parameters describing the initial conditions of the star/stellar populations. This namelist is only read in METISSE’s standalone mode. When METISSE is used with other codes, the input parameters from the overlying code are utilized.</p>
+<h2>1.&nbsp;&nbsp;SSE input controls<a class="headerlink" href="#sse-input-controls" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">SSE_input_controls</span></code> is holds input parameters describing the initial conditions of the star/stellar populations. For the most up-to-date variable names and their default values refer to <a class="reference external" href="https://github.com/TeamMETISSE/METISSE/blob/develop/src/defaults/main_defaults.inc">main_defaults</a>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code class="docutils literal notranslate"><span class="pre">main.input</span></code> is <strong>only</strong> read in METISSE’s standalone mode.
+When METISSE is used with other codes, the input parameters from the overlying code are used.</p>
+</div>
 <section id="evolution-controls">
-<h3>EVOLUTION CONTROLS<a class="headerlink" href="#evolution-controls" title="Link to this heading"></a></h3>
+<h3>1.1.&nbsp;&nbsp;EVOLUTION CONTROLS<a class="headerlink" href="#evolution-controls" title="Link to this heading"></a></h3>
 <table class="docutils align-default">
 <thead>
 <tr class="row-odd"><th class="head"><p>Variable name</p></th>
@@ -153,7 +150,7 @@
 </div>
 </section>
 <section id="remnant-controls">
-<h3>REMNANT CONTROLS<a class="headerlink" href="#remnant-controls" title="Link to this heading"></a></h3>
+<h3>1.2.&nbsp;&nbsp;REMNANT CONTROLS<a class="headerlink" href="#remnant-controls" title="Link to this heading"></a></h3>
 <table class="docutils align-default">
 <thead>
 <tr class="row-odd"><th class="head"><p>Variable name</p></th>
@@ -188,8 +185,8 @@
 </div>
 </section>
 <section id="timestep-controls">
-<h3>TIMESTEP CONTROLS<a class="headerlink" href="#timestep-controls" title="Link to this heading"></a></h3>
-<p>Similar to SSE, METISSE determines timesteps as the fractions of the time spent in a phase</p>
+<h3>1.3.&nbsp;&nbsp;TIMESTEP CONTROLS<a class="headerlink" href="#timestep-controls" title="Link to this heading"></a></h3>
+<p>Similar to SSE, METISSE determines timesteps as the fractions of the time spent in a phase.</p>
 <table class="docutils align-default">
 <thead>
 <tr class="row-odd"><th class="head"><p>Variable name</p></th>
@@ -215,8 +212,8 @@
 </pre></div>
 </div>
 </section>
-<section id="output-controls">
-<h3>OUTPUT CONTROLS<a class="headerlink" href="#output-controls" title="Link to this heading"></a></h3>
+<section id="other-controls">
+<h3>1.4.&nbsp;&nbsp;OTHER CONTROLS<a class="headerlink" href="#other-controls" title="Link to this heading"></a></h3>
 <table class="docutils align-default">
 <thead>
 <tr class="row-odd"><th class="head"><p>Variable name</p></th>
@@ -229,17 +226,17 @@
 </tr>
 </tbody>
 </table>
-<div class="highlight-fortran notranslate"><div class="highlight"><pre><span></span><span class="c">! OUTPUT CONTROLS</span>
-<span class="n">write_output_to_file</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">.</span><span class="n">false</span><span class="p">.</span>
+<div class="highlight-fortran notranslate"><div class="highlight"><pre><span></span><span class="n">write_output_to_file</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">.</span><span class="n">false</span><span class="p">.</span>
 </pre></div>
 </div>
 </section>
 </section>
 <section id="metisse-input-controls">
-<h2>METISSE_input_controls<a class="headerlink" href="#metisse-input-controls" title="Link to this heading"></a></h2>
+<h2>2.&nbsp;&nbsp;METISSE input controls<a class="headerlink" href="#metisse-input-controls" title="Link to this heading"></a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">METISSE_input_controls</span></code> contains input parameters specific to METISSE.</p>
+<p>For the most up-to-date variable names and their default values refer to <a class="reference external" href="https://github.com/TeamMETISSE/METISSE/blob/develop/src/defaults/metisse_defaults.inc">metisse_defaults</a>.</p>
 <section id="track-controls">
-<h3>TRACK CONTROLS<a class="headerlink" href="#track-controls" title="Link to this heading"></a></h3>
+<h3>2.1.&nbsp;&nbsp;TRACK CONTROLS<a class="headerlink" href="#track-controls" title="Link to this heading"></a></h3>
 <table class="docutils align-default">
 <thead>
 <tr class="row-odd"><th class="head"><p>Variable name</p></th>
@@ -248,13 +245,13 @@
 </thead>
 <tbody>
 <tr class="row-even"><td><p>tracks_dir</p></td>
-<td><p><br> Path for providing location of the metallicity files. Metallicity files end with <em>metallicity.in</em> and  <br> contain details about sets of input tracks for hydrogen stars,  including their metallicity values and other metadata. <br> METISSE will raise an error if <code class="docutils literal notranslate"><span class="pre">tracks_dir</span></code> is an empty string.</p></td>
+<td><p><br> Path for providing location of the metallicity files. Metallicity files end with <em><a class="reference external" href="http://metallicity.in">metallicity.in</a></em> and  <br> contain details about sets of input tracks for hydrogen stars,  including their metallicity values and other metadata. <br> METISSE will stop and raise error if <code class="docutils literal notranslate"><span class="pre">tracks_dir</span></code> is an empty string.</p></td>
 </tr>
 <tr class="row-odd"><td><p>tracks_dir_he</p></td>
 <td><p><br> Similar to <code class="docutils literal notranslate"><span class="pre">tracks_dir</span></code> but for providing details about sets of input tracks for naked helium/stripped stars. <br>If <code class="docutils literal notranslate"><span class="pre">tracks_dir_he</span></code> is an empty string, SSE fitting formulae or naked helium stars are used.</p></td>
 </tr>
 <tr class="row-even"><td><p>Z_accuracy_limit</p></td>
-<td><p><br> METISSE checks for a match in metallicity based on the condition <br> <code class="docutils literal notranslate"><span class="pre">(abs(Z_input</span> <span class="pre">-</span> <span class="pre">Z_required)</span> <span class="pre">/</span> <span class="pre">MIN(Z_input,</span> <span class="pre">Z_required))</span> <span class="pre">&gt;</span> <span class="pre">Z_accuracy_limit</span></code>, <br> where <code class="docutils literal notranslate"><span class="pre">Z_input</span></code> is the metallicity value of the tracks (from the metallicity file)<br>   and <code class="docutils literal notranslate"><span class="pre">Z_required</span></code> is the desired value. The default <code class="docutils literal notranslate"><span class="pre">Z_accuracy_limit</span></code> is set to 1e-2.</p></td>
+<td><p><br> METISSE checks for a match in metallicity based on the condition <br> <code class="docutils literal notranslate"><span class="pre">(abs(Z_input</span> <span class="pre">-</span> <span class="pre">Z_required)</span> <span class="pre">/</span> <span class="pre">MIN(Z_input,</span> <span class="pre">Z_required))</span> <span class="pre">&gt;</span> <span class="pre">Z_accuracy_limit</span></code>, <br> where <code class="docutils literal notranslate"><span class="pre">Z_input</span></code> is the metallicity value of the tracks (from the metallicity file)<br>   and <code class="docutils literal notranslate"><span class="pre">Z_required</span></code> is the desired value. The default <code class="docutils literal notranslate"><span class="pre">Z_accuracy_limit</span></code> is set to <code class="docutils literal notranslate"><span class="pre">1d-2</span></code>.</p></td>
 </tr>
 </tbody>
 </table>
@@ -265,8 +262,8 @@
 </pre></div>
 </div>
 </section>
-<section id="id1">
-<h3>OUTPUT CONTROLS<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<section id="output-controls">
+<h3>2.2.&nbsp;&nbsp;OUTPUT CONTROLS<a class="headerlink" href="#output-controls" title="Link to this heading"></a></h3>
 <table class="docutils align-default">
 <thead>
 <tr class="row-odd"><th class="head"><p>Variable name</p></th>
@@ -293,7 +290,7 @@
 </div>
 </section>
 <section id="miscellaneous-controls">
-<h3>MISCELLANEOUS CONTROLS<a class="headerlink" href="#miscellaneous-controls" title="Link to this heading"></a></h3>
+<h3>2.3.&nbsp;&nbsp;MISCELLANEOUS CONTROLS<a class="headerlink" href="#miscellaneous-controls" title="Link to this heading"></a></h3>
 <table class="docutils align-default">
 <thead>
 <tr class="row-odd"><th class="head"><p>Variable name</p></th>
@@ -317,65 +314,13 @@
 </section>
 </section>
 </section>
-<section id="output-files">
-<h1>Output Files<a class="headerlink" href="#output-files" title="Link to this heading"></a></h1>
-<p>METISSE can produce two types of output files:</p>
-<section id="sse-style-output-files">
-<h2>SSE-style output files:<a class="headerlink" href="#sse-style-output-files" title="Link to this heading"></a></h2>
-<p>SSE-style output files, which are files ending with .dat, are controlled by the <code class="docutils literal notranslate"><span class="pre">write_output_to_file</span></code> function in SSE_input_controls. They contain stellar parameters up to the maximum age. Time and age at hydrogen ZAMS are assumed to be zero.
-<em>These files can only be created in standalone mode.</em></p>
-<table class="docutils align-default">
-<thead>
-<tr class="row-odd"><th class="head"><p>Column Header</p></th>
-<th class="head"><p>Description</p></th>
-</tr>
-</thead>
-<tbody>
-<tr class="row-even"><td><p>time</p></td>
-<td><p>Physical time [Myr]</p></td>
-</tr>
-<tr class="row-odd"><td><p>age</p></td>
-<td><p>Age of star [Myr]</p></td>
-</tr>
-<tr class="row-even"><td><p>mass</p></td>
-<td><p>Current mass of the star [M$_\odot$]</p></td>
-</tr>
-<tr class="row-odd"><td><p>core_mass</p></td>
-<td><p>Mass of dominant core [M$_\odot$]</p></td>
-</tr>
-<tr class="row-even"><td><p>He_core</p></td>
-<td><p>Mass of helium core [M$_\odot$]</p></td>
-</tr>
-<tr class="row-odd"><td><p>CO_core</p></td>
-<td><p>Mass of carbon-oxygen core [M$_\odot$]</p></td>
-</tr>
-<tr class="row-even"><td><p>log_L</p></td>
-<td><p>Log of surface luminosity [L$_\odot$]</p></td>
-</tr>
-<tr class="row-odd"><td><p>log_Teff</p></td>
-<td><p>Log of effective temperature [K]</p></td>
-</tr>
-<tr class="row-even"><td><p>log_radius</p></td>
-<td><p>Log of radius [R$_\odot$]</p></td>
-</tr>
-<tr class="row-odd"><td><p>phase</p></td>
-<td><p>SSE stellar type/phase</p></td>
-</tr>
-</tbody>
-</table>
-</section>
-<section id="mist-style-file">
-<h2>MIST-style file:<a class="headerlink" href="#mist-style-file" title="Link to this heading"></a></h2>
-<p>MIST-style files, which end with .eep, are produced for debugging purposes. METISSE can write a mass-interpolated track to an output file with the same columns as input files, including a phase column. This output file only contains data from ZAMS to the end of nuclear-burning phases and does not include information about the remnant phase. It is controlled by the <code class="docutils literal notranslate"><span class="pre">write_eep_file</span></code> function in METISSE_input_controls.</p>
-</section>
-</section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="glossary.html" class="btn btn-neutral float-left" title="Acronyms and definitions" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="usage_other.html" class="btn btn-neutral float-right" title="Using METISSE with other codes" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="usage_other.html" class="btn btn-neutral float-left" title="Using METISSE to evolve binaries" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="using_custom_input_tracks.html" class="btn btn-neutral float-right" title="Using custom input tracks" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
