@@ -879,25 +879,25 @@ module interp_support
                 pars% core_mass = pars% McHe
                 if (i_RHe_core>0) pars% core_radius = new_line(i_RHe_core,1)
             endif
-            if (i_mcenv>0) pars % mcenv = new_line(i_mcenv,1)
+            if (i_mcenv>0) pars% mcenv = new_line(i_mcenv,1)
             if (i_rcenv>0) pars% rcenv = new_line(i_rcenv,1)
 !            if (i_MoI>0) pars% moi = new_line(i_MoI,1)
         elseif(pars% phase >= He_MS) then
             pars% core_mass = pars% McCO
             if (i_he_RCO>0) pars% core_radius = new_line(i_he_RCO,1)
-            if (i_he_mcenv>0) pars % mcenv = new_line(i_he_mcenv,1)
+            if (i_he_mcenv>0) pars% mcenv = new_line(i_he_mcenv,1)
             if (i_he_rcenv>0) pars% rcenv = new_line(i_he_rcenv,1)
 !            if (i_he_MoI>0) pars% moi = new_line(i_he_MoI,1)
         endif
 
         if (i_binding_energy > 0) then 
-            env_mass = (pars % mass) - (pars % core_mass)
+            env_mass = (pars% mass) - (pars% core_mass)
             if (env_mass >= 1d-5) then  ! catch if env_mass = 0
-                pars % binding_energy = new_line(i_binding_energy, 1)
-                sgn = (pars % binding_energy * env_mass) / abs(pars % binding_energy * env_mass)
-                pars % binding_energy =  sgn * 10 ** ( abs(pars % binding_energy * env_mass) )
+                pars% binding_energy = new_line(i_binding_energy, 1)
+                sgn = sign(1d0, pars% binding_energy)
+                pars% binding_energy =  sgn * 10 ** ( abs(pars% binding_energy * env_mass) )
             else 
-                pars % binding_energy = 0.00
+                pars% binding_energy = 0.00
             endif
         endif
             
