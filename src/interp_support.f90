@@ -201,6 +201,15 @@ module interp_support
             iseg = size(cutoff)-1
             deallocate(cutoff); nullify(s)
             return
+        elseif(mass < s(1)% initial_mass*0.9) then
+            min_index = 1
+            keyword = no_interpolation
+            allocate(bounds(1))
+            bounds = min_index
+            if (debug_mass) print*,"No interpolation: mass below lowest initial mass, ",mass
+            iseg = 1
+            deallocate(cutoff); nullify(s)
+            return
         endif
             
         ! we don't want to search the whole list, only between the mass cutoffs
