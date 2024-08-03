@@ -15,9 +15,12 @@ The code package for METISSE is available at this [GitHub Repository](https://gi
 
 The user also needs to provide evolutionary stellar tracks for METISSE to work. 
 
-A grid of tracks for masses between 0.1 and 300 M<sub>$_\odot$</sub>, and metallicity values ranging from 10<sup>-5</sup> to 10<sup>-1</sup> can be downloaded from the (a future zenodo entry). These tracks have been computed using the stellar evolution code [MESA](https://docs.mesastar.org/en/release-r24.03.1/) and are ready for use with METISSE 
+A pre-packaged grid of evolutionary tracks for hydrogen and helium stars can be downloaded from (a future zenodo entry). These tracks have been computed using the stellar evolution code [MESA](https://docs.mesastar.org/en/release-r24.03.1/) and are ready for use with METISSE. 
+The tracks are for non-rotating stars with metallicity values ranging from 10<sup>-5</sup> to 10<sup>-1</sup>. 
+The folder `hydrogen` contains stellar tracks with initial masses between 0.1 and 300 M<sub>$_\odot$</sub> for each metallicity. Similarily the folder `helium` contains tracks of naked helium stars in the mass range 0.3 and 150 M<sub>$_\odot$</sub>.  
 
-In principle, METISSE can use variety of stellar tracks computed using different input parameters, even different stellar evolution codes. [](using_custom_input_tracks.md) describes how to use a custom set of input stellar tracks with METISSE.
+
+METISSE can also use stellar tracks computed using different input parameters, or even different stellar evolution codes. [](using_custom_input_tracks.md) describes how to use a custom set of input stellar tracks with METISSE.
 
 
 ## Running METISSE
