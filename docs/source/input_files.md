@@ -1,30 +1,42 @@
-# Input Files 
+# Input files
 
-In the standalone mode, inputs to METISSE are provided using the Fortran namelists `SSE_input_controls` contained in the *main.input* and `METISSE_input_controls` contained in the *metisse.input*. 
+Inputs to METISSE are provided using the following namelists:
 
-For the most up-to-date variable names and their default values refer to [main_defaults](https://github.com/TeamMETISSE/METISSE/blob/develop/src/defaults/main_defaults.inc)   and [metisse_defaults](https://github.com/TeamMETISSE/METISSE/blob/develop/src/defaults/metisse_defaults.inc). 
-**Never modify any file inside the defaults folder**.
 
-## SSE_input_controls
+## SSE input controls
 
-This namelist contains input parameters describing the initial conditions of the star/stellar populations. This namelist is only read in METISSE's standalone mode. When METISSE is used with other codes, the input parameters from the overlying code are utilized.
+`SSE_input_controls` is holds input parameters describing the initial conditions of the star/stellar populations. For the most up-to-date variable names and their default values refer to [main_defaults](https://github.com/TeamMETISSE/METISSE/blob/develop/src/defaults/main_defaults.inc).
+
+:::{Note}
+`main.input` is **only** read in METISSE's standalone mode. 
+When METISSE is used with other codes, the input parameters from the overlying code are used.
+:::
+
+
 
 ### EVOLUTION CONTROLS
 
 | Variable name        | Description  |
 |----------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| read_mass_from_file  | <br> Logical, if `read_mass_from_file = .true.` provide masses in a text file (one per line) <br> listed in the `input_mass_file`. Use `number_of_tracks` to specify how many masses to use.<br> If `read_mass_from_file = .false.`, use `min_mass` (lower limit), `max_mass` (upper limit), <br> and `number_of_tracks` for uniformly distributed masses between the limits.<br> To evolve a single star set `number_of_tracks = 1` and `min_mass`, ignore `max_mass`. <br> Default is false.                                                                                                                                                |
-| input_mass_file      | Location of the input mass file if `read_mass_from_file = .true.`                                                                                       |
-| number_of_tracks     | Number of stars to be evolved.                                                                                                                             |
-| max_mass             | Upper limit for mass range if `read_mass_from_file = .false.` and `number_of_tracks > 1`                                                                                                                                                               |
-| min_mass             | Lower limit for mass range if `read_mass_from_file = .false.`                                                                                              |
+| read_mass_from_file  | If `.true.`, use initial masses listed in the `input_mass_file`.<br> Default is `.false.`.                                                                                                                                                |
+| input_mass_file      | Path to the input mass file if `read_mass_from_file = .true.`. List one mass value per line of the file.                                                                                       |
+| number_of_tracks     | Number of stars to be evolved. If `read_mass_from_file = .true.`, <br>it denotes the number of mass values to be read from the `input_mass_file`.                                                                                                                            |
+| max_mass             | Upper limit of the unform distribution if `read_mass_from_file = .false.` and `number_of_tracks > 1`                                                                                                                                                               |
+| min_mass             | Lower limit of the unform distribution if `read_mass_from_file = .false.`                                                                                              |
 | initial_Z            | Initial metallicity                                                                                                                                        |
-| max_age              | Maximum age in Megayears    |
+| max_age              | Maximum age in Myrs    |
 
+
+:::{Note}
+
+1. To evolve a single star set `number_of_tracks = 1` and `min_mass`, to the desired initial mass. In this case, `max_mass` is ignored.
+
+2. To compute evolution of a population of stars with uniformly distributed initial masses, use `min_mass` to set the lower limit of the distribution, `max_mass` for the upper limit, and `number_of_tracks` for the size of the population. 
+:::
 
 ```
 ! EVOLUTION CONTROLS
-read_mass_from_file = .false.      
+read_mass_from_file = .false.     
 input_mass_file = ''
 number_of_tracks = 0
 max_mass = -1.0
@@ -35,13 +47,16 @@ max_age = -1.0
 
     
 ### REMNANT CONTROLS
+
+
+
 | Variable name                 | Description |
 |-------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| WD_mass_scheme                | White Dwarf (WD) luminosity calculation method:<br>(1) "Mestel" - [Shapiro S. L., Teukolsky S. A., 1983](https://ui.adsabs.harvard.edu/abs/1983bhwd.book.....S/abstract)<br>(2) "Modified_mestel" - [Hurley J. R., Shara M. M., 2003, ApJ, 589, 179](https://iopscience.iop.org/article/10.1086/374637)                                                                                               |
-| use_initial_final_mass_relation | Logical, if true use the initial final mass relation for White Dwarfs (citation needed). <br> Default is false.                                                                                               |
-| BHNS_mass_scheme              | Neutron Star/Black Hole (NS/BH) type and mass calculation method:<br>(1) "original_SSE" - Default SSE<br>(2) "Belczynski2002" - [Belczynski et al. 2002, ApJ, 572, 407](https://iopscience.iop.org/article/10.1086/340304)<br>(3) "Belczynski2008" - [Belczynski et al. 2008, ApJS, 174, 223](https://iopscience.iop.org/article/10.1086/521026)<br>(4) "Eldridge_Tout2004" - [Eldridge J. J., Tout C. A., 2004, MNRAS, 353, 87](https://ui.adsabs.harvard.edu/abs/2004MNRAS.353...87E/abstract)                                                                                              |
-| max_NS_mass | Maximum neutron star mass. Default is 3.0 <br> Recommended 1.8 for BHNS_mass_scheme = "original_SSE", 3.0 otherwise.                                                                                               |
-| allow_electron_capture | Logical, allow electron capture supernovae if true. <br> Default is true.|        
+| WD_mass_scheme                | White Dwarf (WD) luminosity calculation method:<br>(1) "Mestel" - [Shapiro S. L., Teukolsky S. A., 1983](https://ui.adsabs.harvard.edu/abs/1983bhwd.book.....S/abstract)<br>(2) "Modified_mestel" - [Hurley J. R., Shara M. M., 2003](https://iopscience.iop.org/article/10.1086/374637) <br> Default is "Modified_mestel"                                                                                              |
+| use_initial_final_mass_relation | If `.true.` use the initial final mass relation for white dwarfs <br> from [Han, Z, Podsiadlowski, P., Eggleton, P. P. 1995](https://ui.adsabs.harvard.edu/abs/1995MNRAS.272..800H/abstract). <br> Default is `.false.`                                                                                               |
+| BHNS_mass_scheme              | Neutron Star/Black Hole (NS/BH) type and mass calculation method:<br>(1) "original_SSE" - [Hurley et al. 2000](https://ui.adsabs.harvard.edu/abs/2000MNRAS.315..543H/abstract)<br>(2) "Belczynski2002" - [Belczynski et al. 2002](https://iopscience.iop.org/article/10.1086/340304)<br>(3) "Belczynski2008" - [Belczynski et al. 2008](https://iopscience.iop.org/article/10.1086/521026)<br>(4) "Eldridge_Tout2004" - [Eldridge J. J., Tout C. A., 2004](https://ui.adsabs.harvard.edu/abs/2004MNRAS.353...87E/abstract) <br> Default is "Belczynski2008"                                                                                            |
+| max_NS_mass | Maximum neutron star mass. Recommended 1.8 for <br> BHNS_mass_scheme = "original_SSE", 3.0 otherwise. Default is 3.0                                                                                             |
+| allow_electron_capture | Allow electron capture supernovae if `.true.`. <br> Default is `.true.`|        
 
 ```
 ! REMNANT CONTROLS 
@@ -52,12 +67,14 @@ max_NS_mass = 3.d0
 allow_electron_capture = .true.  
 ```
 ### TIMESTEP CONTROLS
-Similar to SSE, METISSE determines timesteps as the fractions of the time spent in a phase
+
+Like SSE, METISSE  uses `pts` variables to determine the timestep as the decimal fractions of the time spent in a phase. 
+
 | Variable name                 | Description |
 |-------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| pts_1                         | 95% of MS, HeMS. Default is 0.05
-| pts_2                         | last 5% of MS, cHeBurn, HeHG, HeGB. Default is 0.01
-| pts_3                         | HG, RGB, EAGB, TPAGB. Default is 0.02
+| pts_1                         | Determine timestep for 95% of MS, HeMS. Default is 0.05
+| pts_2                         | Determine timestep for last 5% of MS, cHeBurn, HeHG, HeGB. Default is 0.01
+| pts_3                         | Determine timestep for HG, RGB, EAGB, TPAGB. Default is 0.02
 
 ```
 ! TIMESTEP CONTROLS
@@ -69,7 +86,7 @@ pts_3 = 0.02
 ### OUTPUT CONTROLS
 | Variable name                 | Description |
 |-------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| write_track_to_file           | <br> Generate an SSE-style output file (file ending in .dat) at the END of the evolution. <br> Default is false|
+| write_output_to_file           | Generate a [SSE-style](acronyms_definitions.md#sse-style-file) output file (file ending in .dat) at the END of the evolution. <br> Default is `.false.`.|
 
 ```
 ! OUTPUT CONTROLS
@@ -77,18 +94,22 @@ write_output_to_file = .false.
 ```
 
 
-## METISSE_input_controls
+## METISSE input controls
 
 `METISSE_input_controls` contains input parameters specific to METISSE. 
+
+For the most up-to-date variable names and their default values refer to [metisse_defaults](https://github.com/TeamMETISSE/METISSE/blob/develop/src/defaults/metisse_defaults.inc). 
+
 
 ### TRACK CONTROLS
 
 
 | Variable name   | Description  |
 |-----------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| tracks_dir      | <br> Path for providing location of the metallicity files. Metallicity files end with *metallicity.in* and  <br> contain details about sets of input tracks for hydrogen stars,  including their metallicity values and other metadata. <br> METISSE will raise an error if `tracks_dir` is an empty string.                                                                                                                                       |
-| tracks_dir_he   | <br> Similar to `tracks_dir` but for providing details about sets of input tracks for naked helium/stripped stars. <br>If `tracks_dir_he` is an empty string, SSE fitting formulae or naked helium stars are used.                                                                                                                                      |
-| Z_accuracy_limit| <br> METISSE checks for a match in metallicity based on the condition <br> `(abs(Z_input - Z_required) / MIN(Z_input, Z_required)) > Z_accuracy_limit`, <br> where `Z_input` is the metallicity value of the tracks (from the metallicity file)<br>   and `Z_required` is the desired value. The default `Z_accuracy_limit` is set to 1e-2.                                                                                                        |
+| tracks_dir     		| Absolute path to the folder containing the [metallicity files](acronyms_definitions.md#metallicity-file) for the hydrogen stars. <br> **METISSE will stop if `tracks_dir` is an empty string.**                                                                                                                                      |
+| tracks_dir_he  		| Absolute path to the folder containing the [metallicity files](acronyms_definitions.md#metallicity-file) for the naked helium stars. <br>If `tracks_dir_he` is an empty string, SSE fitting formulae for naked helium stars <br> are used.                                                                                                                                      |
+| Z_accuracy_limit		| METISSE checks for a match in metallicity based on the condition: <br> $ \frac{abs(Z\_input - Z\_required)}{min(Z\_input, Z\_required)} >$ `Z_accuracy_limit`, <br> where $Z\_input$ is the metallicity value of the tracks (from the metallicity file)<br>   and $Z\_required$ is the desired value. Default is 10<sup>-2</sup>                                                                                                       |
+| mass_accuracy_limit  	| METISSE skips mass-interpolation and uses a neighboring mass track if <br> the absoulte difference between the initial mass of that track <br>and the input mass is less than the `mass_accuracy_limit`. Default is 10<sup>-4</sup>|
 
 
 ```
@@ -96,61 +117,30 @@ write_output_to_file = .false.
 tracks_dir = ''
 tracks_dir_he = ''
 Z_accuracy_limit = 1d-2
-```
-
-### OUTPUT CONTROLS
-| Variable name                 | Description  |
-|-------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| verbose                       | <br> If true, `verbose` prints useful details when reading the input tracks. <br />Default is false.| 
-| write_eep_file                | <br> Generate MIST style output file at EVERY step of mass interpolation.<br /> Useful for debugging and single star evolution calculations with implicit mass loss. <br />Default is false.|
-| write_error_to_file           | <br> If true, error messages from METISSE are written to a file named fort.99 <br />otherwise they are printed on screen (does NOT apply to errors during reading input files). <br />Default is true.|
+mass_accuracy_limit = 1d-4
 
 ```
-! OUTPUT CONTROLS
-verbose = .false. 
-write_eep_file = .false.		
-write_error_to_file = .true.
-```
+
     
 ### MISCELLANEOUS CONTROLS
 | Variable name                 | Description  |
 |-------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| mass_accuracy_limit           | <br> Skip interpolation in mass if there is already an input track with <br> initial_mass within the `mass_accuracy_limit`. Default is 1d-4|
-| construct_wd_track            | <br> Artificially construct the track between TPAGB phase <br> or tip of the AGB to the WD cooling track (for low-mass stars).  <br>It is useful if input tracks do not contain this phase but can be used otherwise too. <br>Default is true.| 
+| verbose                       | If `.true.`, print important details when reading the input tracks on the terminal. <br>Default is `.false.`.| 
+| write_eep_file                | Generate a [MIST-style](acronyms_definitions.md#mist-style-file) output file at every step of mass interpolation. <br> Useful when computing evolution of isolated single stars with <br>implicit mass loss and for debugging purposes. Default is `.false.`.|
+| write_error_to_file           | If `.true.`, error messages from METISSE are written to a file named `fort.99` <br>otherwise they are printed on screen (does NOT apply to errors during <br>reading input files). Default is `.true.`.|
+| construct_postagb_track            | Artificially construct the HRD (Hertzsprung-Russell diagram) track between <br> tip of the AGB to the WD cooling track (for low-mass stars). It is <br>important if input tracks do not contain this phase but can be used regardless. <br>Default is `.false.`.| 
+
+
 
 ```
 ! MISCELLANEOUS CONTROLS
-mass_accuracy_limit = 1d-4
-construct_wd_track = .true.
+
+verbose = .false.
+write_eep_file = .false.		
+write_error_to_file = .true.
+construct_postagb_track = .false.
+
 ```
-
-
-# Output Files
-
-METISSE can produce two types of output files:
-
-## SSE-style output files: 
-
-SSE-style output files, which are files ending with .dat, are controlled by the `write_output_to_file` function in SSE_input_controls. They contain stellar parameters up to the maximum age. Time and age at hydrogen ZAMS are assumed to be zero. 
-*These files can only be created in standalone mode.*
-
-
-| Column Header | Description |
-|-----------------|-----------------|
-| time | Physical time [Myr] |
-| age | Age of star [Myr] |
-| mass | Current mass of the star [M$_\odot$] |
-| core_mass | Mass of dominant core [M$_\odot$] |
-| He_core | Mass of helium core [M$_\odot$] |
-| CO_core | Mass of carbon-oxygen core [M$_\odot$] |
-| log_L | Log of surface luminosity [L$_\odot$] |
-| log_Teff | Log of effective temperature [K] |
-| log_radius | Log of radius [R$_\odot$] |
-| phase | SSE stellar type/phase |
-
-## MIST-style file: 
-
-MIST-style files, which end with .eep, are produced for debugging purposes. METISSE can write a mass-interpolated track to an output file with the same columns as input files, including a phase column. This output file only contains data from ZAMS to the end of nuclear-burning phases and does not include information about the remnant phase. It is controlled by the `write_eep_file` function in METISSE_input_controls.
 
 
 
