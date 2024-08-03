@@ -1,6 +1,4 @@
-# Acronyms and definitions
-
-The following list provides details of the acronyms and definitions used throughout this documentation. 
+# Glossary
 
 ## Stellar phases
 
@@ -59,7 +57,7 @@ This file ends with `_metallicity.in`and contains information about the input tr
 ## Format files
 
 
-The format file contains information on how to read files, such as header location, important EEPs, and certain column names.  The path to format file is provided through the metallicity file. For more details see [](using_custom_input_tracks.md#format-controls).
+The format file contains information on how to read files, such as header location, important EEPs, and certain column names. The path to a format file is provided through the metallicity file. For more details see [](using_custom_input_tracks.md#format-controls).
 
 
 ## Fortran namelists

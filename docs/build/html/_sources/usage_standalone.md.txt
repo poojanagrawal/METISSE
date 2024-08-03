@@ -1,12 +1,10 @@
 # Using METISSE to evolve single stars
 
  
-METISSE can be used directly (in what we call its standalone mode) to compute the evolution of one star or a population of single stars.
+METISSE can be used independently to compute the evolution of one star or a population of single stars. 
 
-In order to run METISSE, we first need to compile it. 
-*makefile* in folder *make* contains all necessary instructions to compile METISSE in standalone mode. 
 
-To compile the package open a command line shell and inside the METISSE folder execute:
+In order to run METISSE, we first need to compile it. To do so, open a command line shell and inside the METISSE folder execute:
 
 ```console
 
@@ -25,8 +23,8 @@ The code does not need to be re-compiled unless you make changes inside the sour
 
 ## Evolving one star 
 
-Let us compute the evolution of a star with initial mass 1 M<sub>$_\odot$</sub> star, metallicity `Z = 0.02` upto the age of 12 Gyr. 
-Input to METISSE in the standalone mode is provided through two Fortran namelists: `SSE_input_controls` and `METISSE_input_controls`. 
+Let us compute the evolution of a star with initial mass 1 M<sub>$_\odot$</sub> star, metallicity `Z = 0.02` up to the age of 12 Gyr. 
+Input to METISSE in the standalone mode is provided through two [Fortran namelists](acronyms_definitions.md#fortran-namelists): `SSE_input_controls` and `METISSE_input_controls`. 
 See sections [](input_files.md#sse-input-controls) and [](input_files.md#metisse-input-controls) for a complete list of input options. 
 
 
@@ -43,7 +41,7 @@ max_age = 1.2d4
 number_of_tracks = 1
 min_mass = 1.d0
 
-write_track_to_file = .true.   
+write_output_to_file = .true.   
 /
 
 ```
@@ -52,8 +50,7 @@ We also need to provide the details of the input tracks to METISSE through the n
 In the standalone mode of METISSE, `METISSE_input_controls` is contained in the file called `metisse.input`. 
 
 
-We use the variable `tracks_dir` for normal hydrogen stars and the variable`tracks_dir_he` for naked helium/stripped stars to supply paths to the folders that contain files ending with *_metallicity.in*. 
-For the pre-packaged grid of stellar tracks available with METISSE, this is the path of the `hydrogen` and `helium` folders respectively.
+We use the variable `tracks_dir` to supply paths to the folder containing [metallicity files](acronyms_definitions.md#metallicity-file) for normal hydrogen stars and the variable `tracks_dir_he` for naked helium or stripped stars. For the pre-packaged grid of stellar tracks available with METISSE, this is the path to the `hydrogen` and `helium` folders respectively.
 
 
 ```
@@ -69,8 +66,15 @@ verbose = .true.
 /
 
 ```
+
+:::{Important}
+
+The paths provided above are just examples. Users should input `tracks_dir` and `tracks_dir_he` based on the actual location of these folders on their machine after downloading the grid.
+:::
+
+
 Note that we have also set `verbose` to true so that we can see details of the input tracks on the screen. 
-If verbose is False, then these details are written `tracks.log.txt` file. 
+If verbose is False, then these details are saved in the `tracks_log.txt` file in the METISSE directory. 
 
 
 To run METISSE simply type `./metisse` on the command line and hit enter. METISSE will produce the following output on the screen:
@@ -99,7 +103,7 @@ To run METISSE simply type `./metisse` on the command line and hit enter. METISS
 
 ```
 
-Since we had set, `write_track_to_file = .true.` in `SSE_input_controls`, a [SSE-style](./acronyms_definitions.md#output-files) output file will also be generated in the *output* directory, containing a more detailed output.
+Since we had set, `write_output_to_file = .true.` in `SSE_input_controls`, a [SSE-style](acronyms_definitions.md#sse-style-file) output file named 'evolve_00100M.dat' will also be generated in the *output* directory, containing a more detailed evolutionary history of the star.
 
 
 ## Evolving a stellar population
@@ -137,7 +141,8 @@ $ ./metisse
 We also kept `write_track_to_file = .true.` in `SSE_input_controls`. Therefore, the `output` directory will now contain the evolutionary histories of all 10,000 stars. 
 
 
-To compute a population of single stars with any other distribution of initial masses, we can list initial masses in a file and provide the location of that file through `input_mass_file`. If the masses are listed in a file called `my_custom_distribution.txt`, then `SSE_input_controls` will look like this:
+To compute a population of single stars with any other distribution of initial masses, we can list initial masses in a file provide masses in a text file (one per line) and provide the location of that file through `input_mass_file`. 
+If the masses are listed in a file called `my_custom_distribution.txt`, then `SSE_input_controls` will look like this:
 
 
 ```
@@ -164,7 +169,8 @@ Note that we still need to define `number_of_tracks` as METISSE will read `input
 ## If the metallicity value is not present in the input grid
 
 
-Let's say in the above example of a single star, we set `initial_Z = 0.016`. Running METISSE now gives an error.
+Let's say in the above example of a single star, we set `initial_Z = 0.016`. 
+Running METISSE now gives an error, as the metallicity value is not present in the grid of input tracks.
 
 ``` console
 $ ./metisse 
