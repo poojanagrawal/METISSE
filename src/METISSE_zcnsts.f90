@@ -158,8 +158,8 @@ subroutine METISSE_zcnsts(z,zpars,path_to_tracks,path_to_he_tracks,ierr)
     i_he_age = -1
     
     do i = nloop,1, -1
+    
         !read metallicity related variables
-        
         if (i == 2) then
             write(out_unit,*) 'Reading naked helium star tracks'
             call get_metallcity_file_from_Z(metallicity_file_list_he,Z_He,initial_Z,ierr)
@@ -172,16 +172,6 @@ subroutine METISSE_zcnsts(z,zpars,path_to_tracks,path_to_he_tracks,ierr)
             write(out_unit,'(a,1p1e13.5)')" Found matching Z_files ",initial_Z
 
             USE_DIR = TRACKS_DIR_HE
-            
-            ZAMS_HE_EEP = -1
-            TAMS_HE_EEP = -1
-            GB_HE_EEP = -1
-            TPAGB_HE_EEP = -1
-            cCBurn_HE_EEP = -1
-            post_AGB_HE_EEP = -1
-            
-            Initial_EEP_HE = -1
-            Final_EEP_HE = -1
         else
             write(out_unit,*) 'Reading main (hydrogen star) tracks'
             call get_metallcity_file_from_Z(metallicity_file_list,Z_H,initial_Z,ierr)
@@ -220,6 +210,7 @@ subroutine METISSE_zcnsts(z,zpars,path_to_tracks,path_to_he_tracks,ierr)
         xa% filename = track_list
         get_cols = .true.
         
+        ! set_eeps
         if (i == 2) then
             xa% is_he_track = .true.
             call read_key_eeps_he()
@@ -230,12 +221,13 @@ subroutine METISSE_zcnsts(z,zpars,path_to_tracks,path_to_he_tracks,ierr)
             if (debug) print*, "key eeps", key_eeps
         endif
         
+        ! read input files
         if (read_eep_files) then
             if (debug) print*,"reading eep files"
             do j=1,num_tracks
                 call read_eep(xa(j))
                 if (code_error) return
-                if(debug) write(*,'(a100,f8.2,99i8)') trim(xa(j)% filename), xa(j)% initial_mass, xa(j)% ncol
+!                if(debug) write(*,'(a100,f8.2,99i8)') trim(xa(j)% filename), xa(j)% initial_mass, xa(j)% ncol
             end do
         else
             !read and store column names in temp_cols from the the file if header location is not provided
@@ -260,13 +252,13 @@ subroutine METISSE_zcnsts(z,zpars,path_to_tracks,path_to_he_tracks,ierr)
             do j=1,num_tracks
                 call read_input_file(xa(j))
                 if (code_error) return
-                if(debug) write(*,'(a100,f8.2,99i8)') trim(xa(j)% filename), xa(j)% initial_mass, xa(j)% ncol
+!                if(debug) write(*,'(a100,f8.2,99i8)') trim(xa(j)% filename), xa(j)% initial_mass, xa(j)% ncol
             end do
         endif
         
         call check_tracks(num_tracks)
 
-        ! Processing the input tracks
+        ! Process the input tracks
         if (i==2) then
             call set_zparameters_he(num_tracks)
             call copy_and_deallocatex(num_tracks,sa_he)

@@ -160,14 +160,15 @@
     Extra_EEP3 = -1
     
     !----------- EEP DETAILS for He stars----------
-    ! Use the following syntax to provide he stars eeps in your format file
+    ! The following eeps are used to provide key eeps for Helium stars
     
-    !ZAMS_HE_EEP = -1
-    !TAMS_HE_EEP = -1
-    !GB_HE_EEP = -1
-    !cCBurn_HE_EEP = -1
-    !post_AGB_HE_EEP = -1
-    
+    cHeBurn_EEP = -1    ! Zero Age Helium Main Sequence
+    TA_cHeB_EEP = -1    ! Terminal Age Helium Main Sequence
+    BGB_EEP = -1        ! Base of the Giant Branch
+
+    TPAGB_EEP = -1      ! end of AGB
+    cCBurn_EEP = -1     ! end of core Carbon Burning
+    post_AGB_EEP = -1   ! Post-AGB (end of AGB to WD cooling track)
     
     !--- HOW TO DEAL WITH INCOMPLETE TRACKS--------
 

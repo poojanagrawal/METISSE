@@ -56,9 +56,8 @@ module z_support
                         Lum_colname, Teff_colname, Radius_colname, &
                         he_core_mass, co_core_mass, he_core_radius, co_core_radius, &
                         log_Tc, c12_mass_frac, o16_mass_frac,he4_mass_frac, &
-                        mass_conv_envelope, radius_conv_envelope, binding_energy_colname, &
-                        ZAMS_HE_EEP, TAMS_HE_EEP, GB_HE_EEP, cCBurn_HE_EEP, TPAGB_HE_EEP, &
-                        post_AGB_HE_EEP, Initial_EEP_HE, Final_EEP_HE
+                        mass_conv_envelope, radius_conv_envelope, binding_energy_colname
+                        
     contains
 
     subroutine read_defaults()
@@ -834,6 +833,20 @@ module z_support
 
     subroutine read_key_eeps_he()
     integer :: temp(15), neep,ieep
+    
+        ZAMS_HE_EEP = cHeBurn_EEP
+        TAMS_HE_EEP = TA_cHeB_EEP
+        GB_HE_EEP = BGB_EEP
+        TPAGB_HE_EEP = TPAGB_EEP
+        cCBurn_HE_EEP = cCBurn_EEP
+        post_AGB_HE_EEP = post_AGB_EEP
+        
+        Initial_EEP_HE = Initial_EEP
+        Final_EEP_HE = Final_EEP
+        
+        low_mass_eep_he = low_mass_final_eep
+        high_mass_eep_he = high_mass_final_eep
+
         temp = -1
         if (allocated(key_eeps_he)) deallocate(key_eeps_he)
 
@@ -863,10 +876,7 @@ module z_support
         if (Initial_EEP_HE < 0 .or. Initial_EEP_HE< minval(key_eeps_he)) Initial_EEP_HE = ZAMS_HE_EEP
         if (Final_EEP_HE < 0 .or. Final_EEP_HE > maxval(key_eeps_he)) Final_EEP_HE = maxval(key_eeps_he)
     
-        low_mass_eep_he = low_mass_final_eep
         if(low_mass_eep_he<1 .or. low_mass_eep_he>final_eep_he) low_mass_eep_he = Final_EEP_HE
-        
-        high_mass_eep_he = high_mass_final_eep
         if(high_mass_eep_he<1 .or. high_mass_eep_he>final_eep_he) high_mass_eep_he = Final_EEP_HE
         
 !        print*, 'eep he', Initial_EEP_he, final_eep_he, low_mass_eep_he, high_mass_eep_he
