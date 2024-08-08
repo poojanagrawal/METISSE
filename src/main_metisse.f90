@@ -71,7 +71,7 @@ program metisse_main
         if (ierr/=0) t_incomplete(i) = mass
     end do
     
-    if (verbose) print*,"Reached end of the program"
+    if (verbose) print*,"Reached the end of the program"
 
     t_notfound = pack(t_notfound, mask = t_notfound >0)
 

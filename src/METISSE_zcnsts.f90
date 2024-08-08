@@ -9,9 +9,9 @@ subroutine METISSE_zcnsts(z,zpars,path_to_tracks,path_to_he_tracks,ierr)
     
     character(LEN=strlen), allocatable :: track_list(:)
     character(LEN=strlen) :: USE_DIR, find_cmd, rnd, infile
-    integer :: i,j,nloop,jerr
+    integer :: i,j,nloop
     integer :: num_tracks
-    logical :: load_tracks, debug, res
+    logical :: load_tracks, debug
     
     debug = .false.
     ierr = 0
@@ -146,7 +146,7 @@ subroutine METISSE_zcnsts(z,zpars,path_to_tracks,path_to_he_tracks,ierr)
     endif
     
     if (front_end /= main) initial_Z = z
-    write(out_unit,'(a,f10.6)') ' Input Z is :', z
+    write(out_unit,'(a,1p1e13.5)') ' Input Z is :', z
     
     use_sse_NHe = .true.
 
@@ -161,75 +161,58 @@ subroutine METISSE_zcnsts(z,zpars,path_to_tracks,path_to_he_tracks,ierr)
         !read metallicity related variables
         
         if (i == 2) then
+            write(out_unit,*) 'Reading naked helium star tracks'
+            call get_metallcity_file_from_Z(metallicity_file_list_he,Z_He,initial_Z,ierr)
+            if (ierr/=0) then
+                write(out_unit,'(a,1p1e13.5)')" No matching Z_files found with Z_accuracy_limit =",Z_accuracy_limit
+                write(out_unit,*)"Switching to SSE formulae for helium stars "
+                ierr = 0
+                cycle
+            endif
+            write(out_unit,'(a,1p1e13.5)')" Found matching Z_files ",initial_Z
+
+            USE_DIR = TRACKS_DIR_HE
+            
             ZAMS_HE_EEP = -1
             TAMS_HE_EEP = -1
             GB_HE_EEP = -1
             TPAGB_HE_EEP = -1
-
             cCBurn_HE_EEP = -1
             post_AGB_HE_EEP = -1
+            
             Initial_EEP_HE = -1
-    
             Final_EEP_HE = -1
-    
-            write(out_unit,*) 'Reading naked helium star tracks'
-            call get_metallcity_file_from_Z(metallicity_file_list_he,Z_He,initial_Z,ierr)
-            if (ierr/=0) then
-                print*, "Switching to SSE formulae for helium stars "
-                cycle
-            endif
-            if (debug) print*, 'Found matching Z_files ',initial_Z
-
-            USE_DIR = TRACKS_DIR_HE
         else
             write(out_unit,*) 'Reading main (hydrogen star) tracks'
             call get_metallcity_file_from_Z(metallicity_file_list,Z_H,initial_Z,ierr)
-            if (ierr/=0) return
-            if (debug) print*, 'Found matching Z_files ',initial_Z
+            if (ierr/=0) then
+                write(out_unit,'(a,1p1e13.5)')" No matching Z_files found with Z_accuracy_limit =",Z_accuracy_limit
+                write(out_unit,*)"If needed, Z_accuracy_limit can be increased to match one of the available Z_files "
+                write(out_unit,'(1p1e13.5)') pack(Z_H, mask = Z_H>0)
+                return
+            endif
+
+            write(out_unit,'(a,1p1e13.5)')" Found matching Z_files ",initial_Z
             USE_DIR = TRACKS_DIR
         endif
         
-        ! check if the format file exists
-        inquire(file=trim(format_file), exist=res)
-        
-        if (res .eqv. .False.) then
-            if (debug) print*, trim(format_file), 'not found; appending ',trim(USE_DIR)
-            format_file = trim(USE_DIR)//'/'//trim(format_file)
-        endif
-    
         !read file-format
-        call read_format(format_file,ierr); if (ierr/=0) return
+        call read_format(USE_DIR,format_file,ierr); if (ierr/=0) return
             
         !get filenames from input_files_dir
-        
-        if (trim(INPUT_FILES_DIR) == '' )then
-            print*,"METISSE error: INPUT_FILES_DIR is not defined for Z= ", initial_Z
-            ierr = 1; return
-        endif
-        
-        ! first check if use_dir needs to be appended
-        find_cmd = 'find '//trim(USE_DIR)//'/'//trim(INPUT_FILES_DIR)//'/*'//trim(file_extension)//' -maxdepth 1 > .file_name.txt'
-
-        call execute_command_line(find_cmd,exitstat=ierr,cmdstat=jerr)
-        
-        if (ierr==0) INPUT_FILES_DIR = trim(USE_DIR)//'/'//trim(INPUT_FILES_DIR)
-        ! if not , ierr/=0, try using input_files_dir as it is
-        ! this is opposite to the check for format file as
-        ! find command gives confusing error message that cannot be suppressed
-        
-        ! reset ierr to 0 if it's not already
-        ierr = 0
-        
-        write(out_unit,*)"Reading input files from: ", trim(INPUT_FILES_DIR)
-
         call get_files_from_path(INPUT_FILES_DIR,file_extension,track_list,ierr)
         
         if (ierr/=0) then
+            INPUT_FILES_DIR = trim(USE_DIR)//'/'//trim(INPUT_FILES_DIR)
+            call get_files_from_path(INPUT_FILES_DIR,file_extension,track_list,ierr)
+        endif
+        
+        if (ierr/=0 ) then
             print*,'METISSE error: failed to read input files.'
             print*,'Check if INPUT_FILES_DIR is correct.'
             return
         endif
-
+        
         num_tracks = size(track_list)
         
         write(out_unit,*)"Found: ", num_tracks, " tracks"

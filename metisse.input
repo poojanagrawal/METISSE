@@ -10,7 +10,6 @@ tracks_dir_he = '/Users/poojan/stellar_tracks/MESA/big_z/helium'
 
 verbose = .true.
 
-Z_accuracy_limit = 1d-2
 /
 
 

@@ -32,8 +32,7 @@ module z_support
     real(dp) :: high_mass_limit = 1d1 !Msun
     real(dp) :: he_core_mass_limit = 2.2
 
-!    real(dp) ::  Mup_core,Mec_core
-
+    logical :: debug_z
 
     namelist /SSE_input_controls/ initial_Z, max_age,read_mass_from_file,&
                         input_mass_file, number_of_tracks, max_mass, min_mass, &
@@ -63,6 +62,7 @@ module z_support
     contains
 
     subroutine read_defaults()
+        debug_z = .false.
         include 'defaults/metisse_defaults.inc'
     end subroutine read_defaults
     
@@ -140,19 +140,16 @@ module z_support
         real(dp), allocatable,intent(out) :: Z_list(:)
 
         integer :: i,ierr
-        logical:: debug
-
-        debug = .false.
         allocate(Z_list(size(file_list)))
         Z_list = -1.d0
         
         do i = 1, size(file_list)
             if (len_trim(file_list(i))>0) then
-                if (debug) print*, 'Reading : ', trim(file_list(i))
+                if (debug_z) print*, 'Reading : ', trim(file_list(i))
                 call read_metallicity_file(file_list(i),ierr)
                 if (ierr/=0) cycle
                 if (defined (Z_files)) then
-                    if (debug) write(*,*) 'Z_files is', Z_files
+                    if (debug_z) write(*,*) 'Z_files is', Z_files
                     Z_list(i) = Z_files
                 else
                     write(out_unit,*)'Warning: Z_files not defined in "'//trim(file_list(i))//'"'
@@ -191,10 +188,7 @@ module z_support
             initial_Z = Z_files
         else
             ! raise error otherwise
-            print*, initial_Z, ' not found amongst given Z_files with Z_accuracy_limit =', Z_accuracy_limit
-            print*, 'If needed, Z_accuracy_limit can be increased to match one of following ', pack(Z_list, mask = Z_list>0)
             ierr = 1
-            return
         endif
      
     end subroutine get_metallcity_file_from_Z
@@ -221,14 +215,23 @@ module z_support
         
     end subroutine read_metallicity_file
     
-    subroutine read_format(filename,ierr)
-        character(LEN=strlen), intent(in) :: filename
-        integer :: io
+    subroutine read_format(USE_DIR,filename,ierr)
+        character(LEN=strlen), intent(in) :: USE_DIR, filename
         integer, intent(out) :: ierr
-        
+        integer :: io
+        logical :: res
+
         ierr = 0
         !initialize file format specs
         include 'defaults/format_defaults.inc'
+        
+        ! check if the format file exists
+        inquire(file=trim(format_file), exist=res)
+        
+        if (res .eqv. .False.) then
+            if(debug_z) write(*,*)trim(format_file),' not found; appending ',trim(USE_DIR)
+            format_file = trim(USE_DIR)//'/'//trim(format_file)
+        endif
         
         io = alloc_iounit(ierr)
         !read file format specs
@@ -244,7 +247,6 @@ module z_support
 
     end subroutine read_format
 
-    
     subroutine get_files_from_path(path,extension,file_list,ierr)
         character(LEN=strlen), intent(in) :: path
         character(LEN=*), intent(in) :: extension
@@ -252,13 +254,22 @@ module z_support
         integer, intent(out) ::  ierr
 
         character(LEN=strlen) :: str,cmd
-        integer :: n,i, io
-    
-        ierr = 0
-        cmd = 'find '//trim(path)//'/*'//trim(extension)//' -maxdepth 1 > .file_name.txt'
+        integer :: n,i, io,isize
         
+        ierr = 0
+        
+        if (len(path) <1 )then
+            ierr = 1; return
+        endif
+        
+        cmd = 'find '//trim(path)//'/*'//trim(extension)//' -maxdepth 1 > .file_name.txt 2> .error.txt'
         call system(cmd,ierr)
         if (ierr/=0) return
+
+        inquire(file='.error.txt', size=isize)
+        if (isize>0)then
+            ierr = 1; return
+        endif
 
         io = alloc_iounit(ierr)
         open(io,FILE='.file_name.txt',action="read")
@@ -281,11 +292,6 @@ module z_support
         end do
         close(io)
         call free_iounit(io)
-        
-        ! delete .filename.txt
-        cmd = 'rm .file_name.txt'
-        call system(cmd,ierr)
-        
     end subroutine get_files_from_path
 
     subroutine read_eep(x)
@@ -602,7 +608,7 @@ module z_support
         type(column), allocatable :: temp_extra_columns(:)
         integer :: i,j,n,c,ierr
      
-!        if (debug) print*, 'assigning key columns'
+        if (debug_z) print*, 'assigning key columns'
 
         ! Essential columns get reassigned here to match to reduced array format
         temp% loc = -1
@@ -962,7 +968,6 @@ module z_support
     subroutine check_tracks(num_tracks)
         integer :: n, abs_min_ntrack
         real(dp) :: co_core, he_core, min_val
-        logical :: debug
         integer, intent(out):: num_tracks
         real(dp), allocatable, dimension(:) :: core_mass
         real(dp), allocatable, dimension(:) :: sgn
@@ -972,7 +977,6 @@ module z_support
         ! checks for the completeness of the tracks
         ! and whether their core masses are correct or not
         ! converts columns into log where needed
-        debug = .false.
 
         do n = 1,size(xa)
             xa(n)% complete = .true.
