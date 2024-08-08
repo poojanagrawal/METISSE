@@ -61,12 +61,10 @@
 
     Mextra = -1.0       
 
-    ! Hydrogen and helium abundance
+    ! Helium abundance
     ! Default is SSE formulae
-    ! If Z_H <0 then it is calculated from Z as 0.76 - 3*Z
-    ! If Z_He <0 then it is calculated from Z as 0.24 + 2*Z
+    ! If Y_files <0 then it is calculated from Z as 0.24 + 2*Z
 
-    Z_H = -1.0
-    Z_He = -1.0
+    Y_files = -1.0
 
 

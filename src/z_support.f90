@@ -10,7 +10,7 @@ module z_support
     character(LEN=strlen), allocatable :: metallicity_file_list(:),metallicity_file_list_he(:)
     character(LEN=col_width) :: extra_columns(100)
 
-    real(dp) :: Z_files, Z_accuracy_limit
+    real(dp) :: Z_files, Y_files, Z_accuracy_limit
 
     !format_specifications
     character(LEN=5):: file_extension
@@ -45,7 +45,7 @@ module z_support
                         write_eep_file,write_error_to_file, construct_wd_track
             
     namelist /metallicity_controls/ INPUT_FILES_DIR, Z_files,format_file, extra_columns_file, &
-                        read_all_columns, extra_columns,Mhook, Mhef, Mfgb, Mup, Mec, Mextra, Z_H, Z_He
+                        read_all_columns, extra_columns,Mhook, Mhef, Mfgb, Mup, Mec, Mextra, Y_files
                         
     namelist /format_controls/ file_extension, read_eep_files,total_cols,&
                         extra_char, header_location, column_name_file, &
@@ -60,26 +60,21 @@ module z_support
                         mass_conv_envelope, radius_conv_envelope, binding_energy_colname, &
                         ZAMS_HE_EEP, TAMS_HE_EEP, GB_HE_EEP, cCBurn_HE_EEP, TPAGB_HE_EEP, &
                         post_AGB_HE_EEP, Initial_EEP_HE, Final_EEP_HE
-                        !moment_of_inertia,
-            
     contains
 
     subroutine read_defaults()
-        
-        include 'defaults/main_defaults.inc'
         include 'defaults/metisse_defaults.inc'
-        
     end subroutine read_defaults
     
     subroutine read_main_input(infile,ierr)
-
         character(len=strlen), intent(in) :: infile
         integer, intent(out) :: ierr
         integer :: io
         
+        include 'defaults/main_defaults.inc'
         ierr = 0
+
         io = alloc_iounit(ierr)
-        
         open(io,FILE=trim(infile),action="read",iostat=ierr)
             if (ierr /= 0) then
                print*, 'METISSE error: Failed to open: ', trim(infile)
@@ -98,8 +93,8 @@ module z_support
         integer :: io
 
         ierr = 0
-        io = alloc_iounit(ierr)
         
+        io = alloc_iounit(ierr)
         open(io,FILE=trim(infile),action="read",iostat=ierr)
             if (ierr /= 0) then
                print*, 'METISSE error: Failed to open: ', trim(infile)
@@ -140,41 +135,64 @@ module z_support
         deallocate(temp_list)
     end subroutine
     
-    subroutine get_metallcity_file_from_Z(Z_req,file_list,ierr)
-        real(dp), intent(in) :: Z_req
-        integer, intent(out) :: ierr
-        character(LEN=strlen), allocatable :: file_list(:)
+    subroutine get_metallicity_list(file_list,Z_list)
+        character(LEN=strlen), allocatable, intent(in) :: file_list(:)
+        real(dp), allocatable,intent(out) :: Z_list(:)
 
-        integer :: i
-        logical:: found_z,debug
-        
+        integer :: i,ierr
+        logical:: debug
+
         debug = .false.
-
-        ierr = 0
-        found_z = .false.
+        allocate(Z_list(size(file_list)))
+        Z_list = -1.d0
         
         do i = 1, size(file_list)
             if (len_trim(file_list(i))>0) then
                 if (debug) print*, 'Reading : ', trim(file_list(i))
                 call read_metallicity_file(file_list(i),ierr)
                 if (ierr/=0) cycle
-                if (.not. defined (Z_files)) then
-                    write(out_unit,*)'Warning: Z_files not defined in "'//trim(file_list(i))//'"'
+                if (defined (Z_files)) then
+                    if (debug) write(*,*) 'Z_files is', Z_files
+                    Z_list(i) = Z_files
                 else
-                    if (debug) print*, 'Z_files is', Z_files
-                    if (relative_diff(Z_files,Z_req) < Z_accuracy_limit) then
-                        if (debug) print*, 'Z_files matches with input Z'
-                        found_z = .true.
-                        exit
-                    endif
+                    write(out_unit,*)'Warning: Z_files not defined in "'//trim(file_list(i))//'"'
                 endif
-
             endif
         end do
-        if ((found_z .eqv. .false.) .and. (ierr==0)) then
-            print*, 'METISSE error: metallicity value =', Z_req, 'not found amongst given Z_files'
-            print*, 'Check metallicity_file_list and value of Z_files for each file'
-            print*, 'If needed, Z_accuracy_limit can be relaxed (set to a greater value).'
+            
+    end subroutine get_metallicity_list
+    
+    subroutine get_metallcity_file_from_Z(file_list,Z_list,initial_Z,ierr)
+        character(LEN=strlen), allocatable, intent(in) :: file_list(:)
+
+        real(dp) :: initial_Z
+        real(dp), allocatable,intent(in) :: Z_list(:)
+
+        integer :: i,n, ierr
+        real(dp), allocatable :: min_z(:)
+        
+        ierr = 0
+        n = 0
+        allocate(min_z(size(Z_list)))
+        do i = 1, size(Z_list)
+            if (Z_list(i)<=0) then
+                min_z(i) = huge(0.0d0)
+            else
+                min_z(i) = relative_diff(Z_list(i),initial_Z)
+            endif
+        end do
+        
+        ! get min diff between Z-list and initial_Z
+        n = minloc(min_z,dim=1)
+        
+        !check if relative difference between the two is less than threshold
+        if (min_z(n)< Z_accuracy_limit) then
+            call read_metallicity_file(file_list(n),ierr)
+            initial_Z = Z_files
+        else
+            ! raise error otherwise
+            print*, initial_Z, ' not found amongst given Z_files with Z_accuracy_limit =', Z_accuracy_limit
+            print*, 'If needed, Z_accuracy_limit can be increased to match one of following ', pack(Z_list, mask = Z_list>0)
             ierr = 1
             return
         endif
@@ -261,10 +279,8 @@ module z_support
             if (ierr/=0) exit
             file_list(i) = trim(str)
         end do
-
         close(io)
         call free_iounit(io)
-        
         
         ! delete .filename.txt
         cmd = 'rm .file_name.txt'
@@ -436,7 +452,7 @@ module z_support
         
         call set_star_type_from_history(x)
         x% initial_Z = initial_Z
-        x% initial_Y = Z_He
+        x% initial_Y = Y_files
 
         if (debug) print*,x% initial_mass, x% initial_Z, x% ncol
     end subroutine read_input_file
@@ -1345,17 +1361,14 @@ module z_support
         !now redefine zpars with new values
         Mcrit(3:7)% mass = zpars(1:5)
         
-        if (defined(Z_He)) then
-            zpars(12) = Z_He
+        if (defined(Y_files)) then
+            zpars(12) = Y_files
         elseif (xa(1)% initial_Y >0.d0)then
             zpars(12) = xa(1)% initial_Y
         endif
 
-        if (defined(Z_H)) then
-            zpars(11) = Z_H
-        else
-            zpars(11) = 1-initial_Z-Z_He
-        endif
+        
+        zpars(11) = 1-initial_Z-zpars(12)
         
         Z04 = initial_Z**0.4
         

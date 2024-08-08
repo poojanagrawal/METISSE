@@ -11,10 +11,7 @@ subroutine METISSE_zcnsts(z,zpars,path_to_tracks,path_to_he_tracks,ierr)
     character(LEN=strlen) :: USE_DIR, find_cmd, rnd, infile
     integer :: i,j,nloop,jerr
     integer :: num_tracks
-    
-    
-    logical :: load_tracks
-    logical :: debug, res
+    logical :: load_tracks, debug, res
     
     debug = .false.
     ierr = 0
@@ -24,6 +21,7 @@ subroutine METISSE_zcnsts(z,zpars,path_to_tracks,path_to_he_tracks,ierr)
     ! decide how to deal with errors.
 
     code_error = .false.
+    nloop = 2    ! read both hydrogen and helium tracks by default
     
     if (front_end <0) then
         print*, 'METISSE error: front_end is not initialized'
@@ -35,108 +33,123 @@ subroutine METISSE_zcnsts(z,zpars,path_to_tracks,path_to_he_tracks,ierr)
     ! read one set of stellar tracks (of input Z)
     load_tracks = .false.
     
-    if (allocated(sa) .eqv. .false.) then
-        load_tracks = .true.
-        out_unit = alloc_iounit(ierr)
-        open(out_unit,file='tracks_log.txt',action='write',status='unknown')
-    else
+    if (allocated(sa) .eqv. .true.) then
         ! tracks have been loaded at least once, for initial_Z
-        ! check if they need to be reloaded
         
-        ! if input metallicity 'z' has changed
+        ! New tracks need to be loaded
+        ! if input metallicity 'z' has changed significantly from the old 'initial_z'
         if (relative_diff(initial_Z,z) .ge. Z_accuracy_limit) load_tracks = .true.
 
-        ! maybe metallicity is same, but paths may have changed
-        ! (for different stellar parameters)
-        ! TODO: currently only for cosmic, can be modified to include others as well
+        ! or maybe metallicity is the same, but paths may have changed
+        ! (for example, for sets of tracks computed with different stellar parameters)
+        ! Currently only for cosmic, as it can change path_to_tracks mid-computation
+        ! through its python wrapper
+        
         if (front_end == COSMIC)then
             if((trim(path_to_tracks)/=trim(TRACKS_DIR)) .or. &
             (trim(path_to_he_tracks)/=trim(TRACKS_DIR_HE))) load_tracks = .true.
         endif
-            
-    endif
-            
-    if (load_tracks.eqv. .false.) then
-        if (debug) print*, 'No change in metallicity or paths, exiting METISSE_zcnsts',initial_Z,z
-        return
-    endif
-    
-    if (debug) print*, 'Initializing METISSE_zcnsts'
         
-    ! use input file/path to locate list of *metallicity.in files
-    ! these file contain information about eep tracks, their metallicity and format
-    
-    !read defaults option first
-    nloop = 2
-    use_sse_NHe = .true.
-    call read_defaults()
-
-    !read user inputs
-    
-    select case(front_end)
-    case(main)
-        infile = trim(METISSE_DIR)// '/main.input'
-        call read_main_input(infile,ierr)
-        if (.not. defined(initial_Z ))then
-            print*,"METISSE error: initial_Z is not defined in ",trim(infile)
-            ierr = 1
+        if (load_tracks.eqv. .false.) then
+            if (debug) print*, 'No change in metallicity or paths, exiting METISSE_zcnsts',initial_Z,z
+            return
         endif
-        if (ierr/=0) call stop_code
-        
-        infile = trim(METISSE_DIR)// '/metisse.input'
-        call read_metisse_input(infile,ierr)
-        if (ierr/=0) call stop_code
-    case(bse)
-        infile = 'evolve_metisse.in'
-        call read_metisse_input(infile,ierr)
-        if (ierr/=0) call stop_code
-    case(COSMIC)
-        TRACKS_DIR = path_to_tracks
-        TRACKS_DIR_HE = path_to_he_tracks
-    case default
-        print*, "METISSE error: reading inputs; unrecognized front_end_name"
-        ierr = 1; return
-    end select
-    
-    
-    !Some unit numbers are reserved: 5 is standard input, 6 is standard output.
-    if (verbose) then
-        ! close tracks_log.txt and reassign out_unit to
-        ! write output to screen
-        close(out_unit)
-        call free_iounit(out_unit)
-        out_unit = 6
-    endif
-    
-    if (write_error_to_file) then
-        err_unit = 99   !will write to fort.99
     else
-        err_unit = 6      !will write to screen
+        !first entry, read inputs and setup variables
+        if (debug) print*, 'Initializing METISSE_zcnsts'
+
+        load_tracks = .true.
+        !read default options first
+        call read_defaults()
+
+        !read user inputs
+        
+        select case(front_end)
+        case(main)
+            infile = trim(METISSE_DIR)// '/main.input'
+            call read_main_input(infile,ierr)
+            if (.not. defined(initial_Z ))then
+                print*,"METISSE error: initial_Z is not defined in ",trim(infile)
+                ierr = 1
+            endif
+            if (ierr/=0) call stop_code
+            
+            infile = trim(METISSE_DIR)// '/metisse.input'
+            call read_metisse_input(infile,ierr)
+            if (ierr/=0) call stop_code
+        case(bse)
+            infile = 'evolve_metisse.in'
+            call read_metisse_input(infile,ierr)
+            if (ierr/=0) call stop_code
+        case(COSMIC)
+            TRACKS_DIR = path_to_tracks
+            TRACKS_DIR_HE = path_to_he_tracks
+        case default
+            print*, "METISSE error: reading inputs; unrecognized front_end_name"
+            ierr = 1; return
+        end select
+        
+        !Some unit numbers are reserved: 5 is standard input, 6 is standard output.
+        if (verbose) then
+            ! write output to screen
+            out_unit = 6
+        else
+            out_unit = alloc_iounit(ierr)
+            open(out_unit,file='tracks_log.txt',action='write',status='unknown')
+        endif
+        
+        if (write_error_to_file) then
+            err_unit = 99   !will write to fort.99
+        else
+            err_unit = 6      !will write to screen
+        endif
+        
+        ! use input file/path to locate list of *metallicity.in files
+        ! these file contain information about eep tracks, their metallicity
+        ! and the format file
+        
+        if (len(TRACKS_DIR)< 1) then
+            write(*,*) "METISSE error: TRACKS_DIR/path_to_tracks is an empty string"
+            ierr = 1
+            return
+        else
+            call get_metallicity_file_list(TRACKS_DIR,metallicity_file_list)
+                
+            if (.not. allocated(metallicity_file_list)) then
+                write(*,*) "METISSE error: metallicity file(s) not found in", trim(tracks_dir)
+                write(*,*) "check if TRACKS_DIR/path_to_tracks is correct"
+                ierr = 1
+                return
+            else
+                if(debug) print*,'metallicity files: ',metallicity_file_list
+                call get_metallicity_list(metallicity_file_list,Z_H)
+            endif
+        endif
+        
+        if (len(TRACKS_DIR_HE)< 1) then
+            write(out_unit,*) "Warning: TRACKS_DIR_HE/path_to_he_tracks is an empty string"
+            write(out_unit,*) "Switching to SSE formulae for helium stars "
+            nloop = 1
+        else
+            call get_metallicity_file_list(TRACKS_DIR_HE,metallicity_file_list_he)
+
+            if (.not. allocated(metallicity_file_list_he)) then
+                write(*,*) "METISSE error: metallicity file(s) not found in", trim(tracks_dir_he)
+                write(*,*) "check if TRACKS_DIR_HE/path_to_he_tracks is correct"
+                ierr = 1
+                return
+            else
+                if(debug) print*,'metallicity files he : ', metallicity_file_list_he
+                call get_metallicity_list(metallicity_file_list_he,Z_He)
+            endif
+        endif
     endif
     
     if (front_end /= main) initial_Z = z
     write(out_unit,'(a,f10.6)') ' Input Z is :', z
     
-    call get_metallicity_file_list(TRACKS_DIR,metallicity_file_list)
-        
-    if (.not. allocated(metallicity_file_list)) then
-        print*, "METISSE error: metallicity file(s) not found in", trim(tracks_dir)
-        print*, "check if tracks_dir is correct"
-        ierr = 1; return
-    else
-        if(debug) print*,'metallicity files: ',metallicity_file_list
-    endif
-    
-    if (TRACKS_DIR_HE/='') call get_metallicity_file_list(TRACKS_DIR_HE,metallicity_file_list_he)
+    use_sse_NHe = .true.
 
-    if (.not. allocated(metallicity_file_list_he)) then
-        write(out_unit,*) "METISSE error: metallicity file(s) not found in", trim(tracks_dir_he)
-        write(out_unit,*) "Switching to SSE formulae for helium stars "
-        nloop = 1
-    else
-         if(debug) print*,'metallicity files he : ', metallicity_file_list_he
-    endif
-        
     ! need to intialize these seperately as they may be
     ! used uninitialized if he tracks are not present
     i_he_RCO = -1
@@ -160,16 +173,19 @@ subroutine METISSE_zcnsts(z,zpars,path_to_tracks,path_to_he_tracks,ierr)
             Final_EEP_HE = -1
     
             write(out_unit,*) 'Reading naked helium star tracks'
-            call get_metallcity_file_from_Z(initial_Z,metallicity_file_list_he,ierr)
+            call get_metallcity_file_from_Z(metallicity_file_list_he,Z_He,initial_Z,ierr)
             if (ierr/=0) then
                 print*, "Switching to SSE formulae for helium stars "
                 cycle
             endif
+            if (debug) print*, 'Found matching Z_files ',initial_Z
+
             USE_DIR = TRACKS_DIR_HE
         else
             write(out_unit,*) 'Reading main (hydrogen star) tracks'
-            call get_metallcity_file_from_Z(initial_Z,metallicity_file_list,ierr)
+            call get_metallcity_file_from_Z(metallicity_file_list,Z_H,initial_Z,ierr)
             if (ierr/=0) return
+            if (debug) print*, 'Found matching Z_files ',initial_Z
             USE_DIR = TRACKS_DIR
         endif
         

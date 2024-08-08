@@ -121,11 +121,11 @@ module track_support
                                 log_Tc,c12_mass_frac,o16_mass_frac, he4_mass_frac, &
                                 Lum_colname,Teff_colname,Radius_colname, &
                                 he_core_radius, co_core_radius, mass_conv_envelope, &
-                                radius_conv_envelope, binding_energy_colname !, moment_of_inertia
+                                radius_conv_envelope, binding_energy_colname
 
     integer :: i_age, i_age2, i_mass, i_logTe, i_logL, i_logR, i_he_core, i_co_core
-    integer :: i_RHe_core,i_RCO_core,i_mcenv, i_Rcenv, i_binding_energy !,i_MoI
-    integer :: i_he_RCO,i_he_mcenv, i_he_Rcenv,i_he_age!,i_he_MoI
+    integer :: i_RHe_core,i_RCO_core,i_mcenv, i_Rcenv, i_binding_energy
+    integer :: i_he_RCO,i_he_mcenv, i_he_Rcenv,i_he_age
 
     integer :: i_Tc, i_he4, i_c12,i_o16
     integer :: i_Xc, i_Yc, i_Cc,i_Rhoc, i_gamma, i_surfH
@@ -136,7 +136,6 @@ module track_support
     integer, parameter :: max_col = 180
     integer, parameter :: column_int=0
     integer, parameter :: column_dbl=1
-!    character(len=strlen) :: extra_core_columns_names        !TODO: make it flexible
 
     type column
      character(len=col_width) :: name
@@ -224,8 +223,8 @@ module track_support
     logical :: read_mass_from_file
     
     !for z_support
-    real(dp) :: Mhook, Mhef,Mfgb, Mup, Mec, Mextra,Mup_core,Mec_core
-    real(dp) :: Z04, Z_H, Z_He
+    real(dp) :: Mhook, Mhef,Mfgb, Mup, Mec, Mextra,Mup_core,Mec_core,Z04
+    real(dp), allocatable :: Z_H(:), Z_He(:)
     integer, allocatable :: m_cutoff(:), m_cutoff_he(:)
 
     type critical_mass

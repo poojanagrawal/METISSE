@@ -1,12 +1,16 @@
 &METISSE_input_controls
 
-
-tracks_dir = '/Users/poojan/stellar_tracks/MESA/METISSE_INPUT_FILES/Hydrogen/'
+tracks_dir = '/Users/poojan/stellar_tracks/MESA/big_z/hydrogen'
             
-tracks_dir_he = '/Users/poojan/stellar_tracks/MESA/METISSE_INPUT_FILES/Helium/'
+tracks_dir_he = '/Users/poojan/stellar_tracks/MESA/big_z/helium'
+
+!tracks_dir = '/Users/poojan/stellar_tracks/MESA/METISSE_INPUT_FILES/Hydrogen/'
+            
+!tracks_dir_he = '/Users/poojan/stellar_tracks/MESA/METISSE_INPUT_FILES/Helium/'
 
 verbose = .true.
 
+Z_accuracy_limit = 1d-2
 /
 
 
