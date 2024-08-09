@@ -27,8 +27,12 @@ subroutine comenv_lambda(KW,M0,L,R,MENVD,LAMBDA,id,LAMBF)
     else
         RZAMS = 10.d0**t% tr(i_logR,ZAMS_EEP)
     endif
-                
-    LAMBF = CELAMF(KW,M0,L,R,RZAMS,MENVD,LAMBDA)
+    
+    if (i_binding_energy > 0) then
+        LAMBF = - (t% pars% mass * (t% pars% mass - t% pars% core_mass)) / (t% pars% binding_energy * R)
+    else
+        LAMBF = CELAMF(KW,M0,L,R,RZAMS,MENVD,LAMBDA)
+    endif
     !comenv_lambda = LAMBF
 
     nullify(t)
