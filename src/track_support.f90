@@ -30,7 +30,7 @@ module track_support
     integer, parameter :: BSE = 1
     integer, parameter :: COSMIC = 2
 
-    character(len=strlen) :: METISSE_DIR,TRACKS_DIR,TRACKS_DIR_HE
+    character(len=strlen) :: METISSE_DIR,METALLICITY_DIR,METALLICITY_DIR_HE
 
     ! for use when constructing EEP distance
     logical :: weight_center_rho_T_by_Xc

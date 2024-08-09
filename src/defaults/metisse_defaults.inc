@@ -9,22 +9,22 @@
     
     ! Absolute path to the folder containing the metallicity files
     ! for the hydrogen stars.
-    ! METISSE will stop if tracks_dir is an empty string.
+    ! METISSE will stop if METALLICITY_DIR is an empty string.
     
-    tracks_dir = ''
+    METALLICITY_DIR = ''
 
     ! Absolute path to the folder containing the metallicity files
     ! for the naked helium stars.
-    ! If tracks_dir_he is an empty string,
+    ! If METALLICITY_DIR_HE is an empty string,
     ! SSE fitting formulae for naked helium stars are used.
     
-    tracks_dir_he = ''
+    METALLICITY_DIR_HE = ''
     
     
     ! METISSE looks for files(s) ending with *metallicity.in*
-    ! in the paths provided through 'tracks_dir' and 'tracks_dir_he'
-    ! where 'tracks_dir' is for providing the location of the metallicity file(s)
-    ! for hydrogen star and  'tracks_dir_he' is for providing the location
+    ! in the paths provided through 'METALLICITY_DIR' and 'METALLICITY_DIR_HE'
+    ! where 'METALLICITY_DIR' is for providing the location of the metallicity file(s)
+    ! for hydrogen star and  'METALLICITY_DIR_HE' is for providing the location
     ! of the metallicity file(s) for the naked helium/stripped stars.
     
     

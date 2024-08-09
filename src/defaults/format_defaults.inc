@@ -19,7 +19,7 @@
     
     ! File extension of the input files (e.g., ‘.eep’, ‘.dat’).
     ! METISSE will look for files ending with file_extension
-    ! in the INPUT_FILES_DIR.
+    ! in the eep_tracks_dir.
     file_extension = ''
     
     ! Line number corresponding to the column names in the input files for EEP-tracks.

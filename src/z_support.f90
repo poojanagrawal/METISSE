@@ -2,7 +2,7 @@ module z_support
     use track_support
     implicit none
 
-    character(LEN=strlen) :: INPUT_FILES_DIR
+    character(LEN=strlen) :: eep_tracks_dir
     logical :: read_eep_files, read_all_columns, get_cols
 
     integer :: max_files = 50
@@ -40,11 +40,11 @@ module z_support
                         BHNS_mass_scheme, max_NS_mass,pts_1, pts_2, pts_3, write_output_to_file, &
                         read_all_columns, extra_columns, extra_columns_file
                         
-    namelist /METISSE_input_controls/ tracks_dir, tracks_dir_he, &
+    namelist /METISSE_input_controls/ METALLICITY_DIR, METALLICITY_DIR_HE, &
                         Z_accuracy_limit, mass_accuracy_limit, verbose, &
                         write_eep_file, write_error_to_file, construct_postagb_track
             
-    namelist /metallicity_controls/ INPUT_FILES_DIR, Z_files,format_file,Y_files, &
+    namelist /metallicity_controls/ eep_tracks_dir, Z_files,format_file,Y_files, &
                         Mhook, Mhef, Mfgb, Mup, Mec, Mextra
                         
     namelist /format_controls/ file_extension, read_eep_files, total_cols,&

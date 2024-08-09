@@ -46,8 +46,8 @@ subroutine METISSE_zcnsts(z,zpars,path_to_tracks,path_to_he_tracks,ierr)
         ! through its python wrapper
         
         if (front_end == COSMIC)then
-            if((trim(path_to_tracks)/=trim(TRACKS_DIR)) .or. &
-            (trim(path_to_he_tracks)/=trim(TRACKS_DIR_HE))) load_tracks = .true.
+            if((trim(path_to_tracks)/=trim(METALLICITY_DIR)) .or. &
+            (trim(path_to_he_tracks)/=trim(METALLICITY_DIR_HE))) load_tracks = .true.
         endif
         
         if (load_tracks.eqv. .false.) then
@@ -82,8 +82,8 @@ subroutine METISSE_zcnsts(z,zpars,path_to_tracks,path_to_he_tracks,ierr)
             call read_metisse_input(infile,ierr)
             if (ierr/=0) call stop_code
         case(COSMIC)
-            TRACKS_DIR = path_to_tracks
-            TRACKS_DIR_HE = path_to_he_tracks
+            METALLICITY_DIR = path_to_tracks
+            METALLICITY_DIR_HE = path_to_he_tracks
         case default
             print*, "METISSE error: reading inputs; unrecognized front_end_name"
             ierr = 1; return
@@ -108,16 +108,16 @@ subroutine METISSE_zcnsts(z,zpars,path_to_tracks,path_to_he_tracks,ierr)
         ! these file contain information about eep tracks, their metallicity
         ! and the format file
         
-        if (len(TRACKS_DIR)< 1) then
-            write(*,*) "METISSE error: TRACKS_DIR/path_to_tracks is an empty string"
+        if (len(METALLICITY_DIR)< 1) then
+            write(*,*) "METISSE error: METALLICITY_DIR/path_to_tracks is an empty string"
             ierr = 1
             return
         else
-            call get_metallicity_file_list(TRACKS_DIR,metallicity_file_list)
+            call get_metallicity_file_list(METALLICITY_DIR,metallicity_file_list)
                 
             if (.not. allocated(metallicity_file_list)) then
-                write(*,*) "METISSE error: metallicity file(s) not found in", trim(tracks_dir)
-                write(*,*) "check if TRACKS_DIR/path_to_tracks is correct"
+                write(*,*) "METISSE error: metallicity file(s) not found in", trim(METALLICITY_DIR)
+                write(*,*) "check if METALLICITY_DIR/path_to_tracks is correct"
                 ierr = 1
                 return
             else
@@ -126,16 +126,16 @@ subroutine METISSE_zcnsts(z,zpars,path_to_tracks,path_to_he_tracks,ierr)
             endif
         endif
         
-        if (len(TRACKS_DIR_HE)< 1) then
-            write(out_unit,*) "Warning: TRACKS_DIR_HE/path_to_he_tracks is an empty string"
+        if (len(METALLICITY_DIR_HE)< 1) then
+            write(out_unit,*) "Warning: METALLICITY_DIR_HE/path_to_he_tracks is an empty string"
             write(out_unit,*) "Switching to SSE formulae for helium stars "
             nloop = 1
         else
-            call get_metallicity_file_list(TRACKS_DIR_HE,metallicity_file_list_he)
+            call get_metallicity_file_list(METALLICITY_DIR_HE,metallicity_file_list_he)
 
             if (.not. allocated(metallicity_file_list_he)) then
-                write(*,*) "METISSE error: metallicity file(s) not found in", trim(tracks_dir_he)
-                write(*,*) "check if TRACKS_DIR_HE/path_to_he_tracks is correct"
+                write(*,*) "METISSE error: metallicity file(s) not found in", trim(METALLICITY_DIR_HE)
+                write(*,*) "check if METALLICITY_DIR_HE/path_to_he_tracks is correct"
                 ierr = 1
                 return
             else
@@ -171,7 +171,7 @@ subroutine METISSE_zcnsts(z,zpars,path_to_tracks,path_to_he_tracks,ierr)
             endif
             write(out_unit,'(a,1p1e13.5)')" Found matching Z_files ",initial_Z
 
-            USE_DIR = TRACKS_DIR_HE
+            USE_DIR = METALLICITY_DIR_HE
         else
             write(out_unit,*) 'Reading main (hydrogen star) tracks'
             call get_metallcity_file_from_Z(metallicity_file_list,Z_H,initial_Z,ierr)
@@ -183,24 +183,24 @@ subroutine METISSE_zcnsts(z,zpars,path_to_tracks,path_to_he_tracks,ierr)
             endif
 
             write(out_unit,'(a,1p1e13.5)')" Found matching Z_files ",initial_Z
-            USE_DIR = TRACKS_DIR
+            USE_DIR = METALLICITY_DIR
         endif
         
         !read file-format
         call read_format(USE_DIR,format_file,ierr); if (ierr/=0) return
             
-        !get filenames from input_files_dir
+        !get filenames from eep_tracks_dir
         if (read_eep_files) file_extension = '.eep'
-        call get_files_from_path(INPUT_FILES_DIR,file_extension,track_list,ierr)
+        call get_files_from_path(eep_tracks_dir,file_extension,track_list,ierr)
         
         if (ierr/=0) then
-            INPUT_FILES_DIR = trim(USE_DIR)//'/'//trim(INPUT_FILES_DIR)
-            call get_files_from_path(INPUT_FILES_DIR,file_extension,track_list,ierr)
+            eep_tracks_dir = trim(USE_DIR)//'/'//trim(eep_tracks_dir)
+            call get_files_from_path(eep_tracks_dir,file_extension,track_list,ierr)
         endif
         
         if (ierr/=0 ) then
             print*,'METISSE error: failed to read input files.'
-            print*,'Check if INPUT_FILES_DIR is correct.'
+            print*,'Check if eep_tracks_dir is correct.'
             return
         endif
         

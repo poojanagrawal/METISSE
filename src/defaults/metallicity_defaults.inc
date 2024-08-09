@@ -5,7 +5,7 @@
 !metallicity_controls
     ! Location of the folder containing input files for a given metallicity
 
-    INPUT_FILES_DIR = ''
+    eep_tracks_dir = ''
 
     ! Metallicity of input tracks
     ! It is only used to cross-check 
