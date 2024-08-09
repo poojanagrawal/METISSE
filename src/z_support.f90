@@ -2,7 +2,7 @@ module z_support
     use track_support
     implicit none
 
-    character(LEN=strlen) :: INPUT_FILES_DIR
+    character(LEN=strlen) :: eep_tracks_dir
     logical :: read_eep_files, read_all_columns, get_cols
 
     integer :: max_files = 50
@@ -10,7 +10,7 @@ module z_support
     character(LEN=strlen), allocatable :: metallicity_file_list(:),metallicity_file_list_he(:)
     character(LEN=col_width) :: extra_columns(100)
 
-    real(dp) :: Z_files, Z_accuracy_limit
+    real(dp) :: Z_files, Y_files, Z_accuracy_limit
 
     !format_specifications
     character(LEN=5):: file_extension
@@ -30,24 +30,24 @@ module z_support
     real(dp) :: center_carbon_limit = 1d-4
     real(dp) :: log_center_T_limit = 9d0
     real(dp) :: high_mass_limit = 1d1 !Msun
-    real(dp) :: he_core_mass_limit = 2.2
+    real(dp) :: he_core_mass_limit = 2.2d0 !Msun
 
-!    real(dp) ::  Mup_core,Mec_core
-
+    logical :: debug_z
 
     namelist /SSE_input_controls/ initial_Z, max_age,read_mass_from_file,&
                         input_mass_file, number_of_tracks, max_mass, min_mass, &
                         WD_mass_scheme,use_initial_final_mass_relation, allow_electron_capture, &
-                        BHNS_mass_scheme, max_NS_mass,pts_1, pts_2, pts_3, write_track_to_file
-
-    namelist /METISSE_input_controls/ tracks_dir, tracks_dir_he, &
-                        Z_accuracy_limit, mass_accuracy_limit, verbose, &
-                        write_eep_file,write_error_to_file, construct_wd_track
-            
-    namelist /metallicity_controls/ INPUT_FILES_DIR, Z_files,format_file, extra_columns_file, &
-                        read_all_columns, extra_columns,Mhook, Mhef, Mfgb, Mup, Mec, Mextra, Z_H, Z_He
+                        BHNS_mass_scheme, max_NS_mass,pts_1, pts_2, pts_3, write_output_to_file, &
+                        read_all_columns, extra_columns, extra_columns_file
                         
-    namelist /format_controls/ file_extension, read_eep_files,total_cols,&
+    namelist /METISSE_input_controls/ METALLICITY_DIR, METALLICITY_DIR_HE, &
+                        Z_accuracy_limit, mass_accuracy_limit, verbose, &
+                        write_eep_file, write_error_to_file, construct_postagb_track
+            
+    namelist /metallicity_controls/ eep_tracks_dir, Z_files,format_file,Y_files, &
+                        Mhook, Mhef, Mfgb, Mup, Mec, Mextra
+                        
+    namelist /format_controls/ file_extension, read_eep_files, total_cols,&
                         extra_char, header_location, column_name_file, &
                         PreMS_EEP, ZAMS_EEP, IAMS_EEP, TAMS_EEP, BGB_EEP, cHeIgnition_EEP, &
                         cHeBurn_EEP, TA_cHeB_EEP, TPAGB_EEP, cCBurn_EEP, post_AGB_EEP, &
@@ -57,29 +57,26 @@ module z_support
                         Lum_colname, Teff_colname, Radius_colname, &
                         he_core_mass, co_core_mass, he_core_radius, co_core_radius, &
                         log_Tc, c12_mass_frac, o16_mass_frac,he4_mass_frac, &
-                        mass_conv_envelope, radius_conv_envelope, binding_energy_colname, &
-                        ZAMS_HE_EEP, TAMS_HE_EEP, GB_HE_EEP, cCBurn_HE_EEP, TPAGB_HE_EEP, &
-                        post_AGB_HE_EEP, Initial_EEP_HE, Final_EEP_HE
-                        !moment_of_inertia,
-            
+                        mass_conv_envelope, radius_conv_envelope, binding_energy_colname
+                        
     contains
 
     subroutine read_defaults()
-        
-        include 'defaults/main_defaults.inc'
+        debug_z = .false.
+        !path is relative to the executable
+        METISSE_DIR = '.'
         include 'defaults/metisse_defaults.inc'
-        
     end subroutine read_defaults
     
     subroutine read_main_input(infile,ierr)
-
         character(len=strlen), intent(in) :: infile
         integer, intent(out) :: ierr
         integer :: io
         
+        include 'defaults/main_defaults.inc'
         ierr = 0
+
         io = alloc_iounit(ierr)
-        
         open(io,FILE=trim(infile),action="read",iostat=ierr)
             if (ierr /= 0) then
                print*, 'METISSE error: Failed to open: ', trim(infile)
@@ -98,8 +95,8 @@ module z_support
         integer :: io
 
         ierr = 0
-        io = alloc_iounit(ierr)
         
+        io = alloc_iounit(ierr)
         open(io,FILE=trim(infile),action="read",iostat=ierr)
             if (ierr /= 0) then
                print*, 'METISSE error: Failed to open: ', trim(infile)
@@ -140,43 +137,60 @@ module z_support
         deallocate(temp_list)
     end subroutine
     
-    subroutine get_metallcity_file_from_Z(Z_req,file_list,ierr)
-        real(dp), intent(in) :: Z_req
-        integer, intent(out) :: ierr
-        character(LEN=strlen), allocatable :: file_list(:)
+    subroutine get_metallicity_list(file_list,Z_list)
+        character(LEN=strlen), allocatable, intent(in) :: file_list(:)
+        real(dp), allocatable,intent(out) :: Z_list(:)
 
-        integer :: i
-        logical:: found_z,debug
-        
-        debug = .false.
-
-        ierr = 0
-        found_z = .false.
+        integer :: i,ierr
+        allocate(Z_list(size(file_list)))
+        Z_list = -1.d0
         
         do i = 1, size(file_list)
             if (len_trim(file_list(i))>0) then
-                if (debug) print*, 'Reading : ', trim(file_list(i))
+                if (debug_z) print*, 'Reading : ', trim(file_list(i))
                 call read_metallicity_file(file_list(i),ierr)
                 if (ierr/=0) cycle
-                if (.not. defined (Z_files)) then
-                    write(out_unit,*)'Warning: Z_files not defined in "'//trim(file_list(i))//'"'
+                if (defined (Z_files)) then
+                    if (debug_z) write(*,*) 'Z_files is', Z_files
+                    Z_list(i) = Z_files
                 else
-                    if (debug) print*, 'Z_files is', Z_files
-                    if (relative_diff(Z_files,Z_req) < Z_accuracy_limit) then
-                        if (debug) print*, 'Z_files matches with input Z'
-                        found_z = .true.
-                        exit
-                    endif
+                    write(out_unit,*)'Warning: Z_files not defined in "'//trim(file_list(i))//'"'
                 endif
-
             endif
         end do
-        if ((found_z .eqv. .false.) .and. (ierr==0)) then
-            print*, 'METISSE error: metallicity value =', Z_req, 'not found amongst given Z_files'
-            print*, 'Check metallicity_file_list and value of Z_files for each file'
-            print*, 'If needed, Z_accuracy_limit can be relaxed (set to a greater value).'
+            
+    end subroutine get_metallicity_list
+    
+    subroutine get_metallcity_file_from_Z(file_list,Z_list,initial_Z,ierr)
+        character(LEN=strlen), allocatable, intent(in) :: file_list(:)
+
+        real(dp) :: initial_Z
+        real(dp), allocatable,intent(in) :: Z_list(:)
+
+        integer :: i,n, ierr
+        real(dp), allocatable :: min_z(:)
+        
+        ierr = 0
+        n = 0
+        allocate(min_z(size(Z_list)))
+        do i = 1, size(Z_list)
+            if (Z_list(i)<=0) then
+                min_z(i) = huge(0.0d0)
+            else
+                min_z(i) = relative_diff(Z_list(i),initial_Z)
+            endif
+        end do
+        
+        ! get min diff between Z-list and initial_Z
+        n = minloc(min_z,dim=1)
+        
+        !check if relative difference between the two is less than threshold
+        if (min_z(n)< Z_accuracy_limit) then
+            call read_metallicity_file(file_list(n),ierr)
+            initial_Z = Z_files
+        else
+            ! raise error otherwise
             ierr = 1
-            return
         endif
      
     end subroutine get_metallcity_file_from_Z
@@ -203,14 +217,23 @@ module z_support
         
     end subroutine read_metallicity_file
     
-    subroutine read_format(filename,ierr)
-        character(LEN=strlen), intent(in) :: filename
-        integer :: io
+    subroutine read_format(USE_DIR,filename,ierr)
+        character(LEN=strlen), intent(in) :: USE_DIR, filename
         integer, intent(out) :: ierr
-        
+        integer :: io
+        logical :: res
+
         ierr = 0
         !initialize file format specs
         include 'defaults/format_defaults.inc'
+        
+        ! check if the format file exists
+        inquire(file=trim(format_file), exist=res)
+        
+        if (res .eqv. .False.) then
+            if(debug_z) write(*,*)trim(format_file),' not found; appending ',trim(USE_DIR)
+            format_file = trim(USE_DIR)//'/'//trim(format_file)
+        endif
         
         io = alloc_iounit(ierr)
         !read file format specs
@@ -226,7 +249,6 @@ module z_support
 
     end subroutine read_format
 
-    
     subroutine get_files_from_path(path,extension,file_list,ierr)
         character(LEN=strlen), intent(in) :: path
         character(LEN=*), intent(in) :: extension
@@ -234,13 +256,22 @@ module z_support
         integer, intent(out) ::  ierr
 
         character(LEN=strlen) :: str,cmd
-        integer :: n,i, io
-    
-        ierr = 0
-        cmd = 'find '//trim(path)//'/*'//trim(extension)//' -maxdepth 1 > .file_name.txt'
+        integer :: n,i, io,isize
         
+        ierr = 0
+        
+        if (len(path) <1 )then
+            ierr = 1; return
+        endif
+        
+        cmd = 'find '//trim(path)//'/*'//trim(extension)//' -maxdepth 1 > .file_name.txt 2> .error.txt'
         call system(cmd,ierr)
         if (ierr/=0) return
+
+        inquire(file='.error.txt', size=isize)
+        if (isize>0)then
+            ierr = 1; return
+        endif
 
         io = alloc_iounit(ierr)
         open(io,FILE='.file_name.txt',action="read")
@@ -261,15 +292,8 @@ module z_support
             if (ierr/=0) exit
             file_list(i) = trim(str)
         end do
-
         close(io)
         call free_iounit(io)
-        
-        
-        ! delete .filename.txt
-        cmd = 'rm .file_name.txt'
-        call system(cmd,ierr)
-        
     end subroutine get_files_from_path
 
     subroutine read_eep(x)
@@ -436,7 +460,7 @@ module z_support
         
         call set_star_type_from_history(x)
         x% initial_Z = initial_Z
-        x% initial_Y = Z_He
+        x% initial_Y = Y_files
 
         if (debug) print*,x% initial_mass, x% initial_Z, x% ncol
     end subroutine read_input_file
@@ -581,14 +605,14 @@ module z_support
         type(column), intent(in) :: cols(:)
         integer, intent(in) :: ncol
         logical, intent(in) :: is_he_track
-        
-        type(column) :: temp(ncol)
-        type(column), allocatable :: temp_extra_columns(:)
-        integer :: i,j,n,c,ierr
+        type(column), allocatable :: temp(:)
+        integer :: i,j,n,ierr
      
-!        if (debug) print*, 'assigning key columns'
+        if (debug_z) print*, 'assigning key columns'
 
         ! Essential columns get reassigned here to match to reduced array format
+        
+        allocate(temp(ncol))
         temp% loc = -1
         temp% name  =  ''
 
@@ -614,6 +638,35 @@ module z_support
             if (i_mcenv>0) call assign_sgl_col(temp, i_mcenv, mass_conv_envelope,n)
             if (i_Rcenv>0) call assign_sgl_col(temp, i_Rcenv, radius_conv_envelope,n)
         endif
+        
+        if (front_end == main) call check_for_extra_columns(cols,temp,n)
+        
+        allocate(key_cols(n-1))
+        key_cols% name = temp(1:n-1)% name
+        key_cols% loc = temp(1:n-1)% loc
+
+        i_age = n
+        if(is_he_track) i_he_age = n
+        deallocate(temp)
+        
+    end subroutine set_key_columns
+
+    subroutine assign_sgl_col(temp, col, colname,n)
+        type(column) :: temp(:)
+        character(len=col_width), intent(in) :: colname
+        integer, intent(inout):: n,col
+        
+        temp(n)% loc = col
+        temp(n)% name = colname
+        col = n
+        n = n+1
+    end subroutine
+    
+    subroutine check_for_extra_columns(cols,temp,n)
+        type(column), intent(in) :: cols(:)
+        type(column), allocatable :: temp(:)
+        type(column), allocatable :: temp_extra_columns(:)
+        integer :: i,j,n,c,ierr
         
         c = count(len_trim(extra_columns)>0)
         if (c>0) then
@@ -641,26 +694,8 @@ module z_support
                 deallocate(temp_extra_columns)
             endif
         endif
-    
-        allocate(key_cols(n-1))
-        key_cols% name = temp(1:n-1)% name
-        key_cols% loc = temp(1:n-1)% loc
 
-        i_age = n
-        if(is_he_track) i_he_age = n
-        
-    end subroutine set_key_columns
-
-    subroutine assign_sgl_col(temp, col, colname,n)
-        type(column) :: temp(:)
-        character(len=col_width), intent(in) :: colname
-        integer, intent(inout):: n,col
-        
-        temp(n)% loc = col
-        temp(n)% name = colname
-        col = n
-        n = n+1
-    end subroutine
+    end subroutine check_for_extra_columns
 
     !reading column names from file - from iso_eep_support.f90
     subroutine process_columns(filename,cols,ierr)
@@ -801,6 +836,8 @@ module z_support
         allocate(key_eeps(neep))
         key_eeps = pack(temp,temp > 0)
         
+        if (cHeIgnition_EEP<0)  cHeIgnition_EEP = cHeBurn_EEP
+        
         !define initial and final eep if not already defined
         if(Initial_EEP <0 .or. Initial_EEP< minval(key_eeps)) Initial_EEP = ZAMS_EEP
         if(Final_EEP < 0 .or. Final_EEP > maxval(key_eeps)) Final_EEP = maxval(key_eeps)
@@ -812,6 +849,20 @@ module z_support
 
     subroutine read_key_eeps_he()
     integer :: temp(15), neep,ieep
+    
+        ZAMS_HE_EEP = cHeBurn_EEP
+        TAMS_HE_EEP = TA_cHeB_EEP
+        GB_HE_EEP = BGB_EEP
+        TPAGB_HE_EEP = TPAGB_EEP
+        cCBurn_HE_EEP = cCBurn_EEP
+        post_AGB_HE_EEP = post_AGB_EEP
+        
+        Initial_EEP_HE = Initial_EEP
+        Final_EEP_HE = Final_EEP
+        
+        low_mass_eep_he = low_mass_final_eep
+        high_mass_eep_he = high_mass_final_eep
+
         temp = -1
         if (allocated(key_eeps_he)) deallocate(key_eeps_he)
 
@@ -841,10 +892,7 @@ module z_support
         if (Initial_EEP_HE < 0 .or. Initial_EEP_HE< minval(key_eeps_he)) Initial_EEP_HE = ZAMS_HE_EEP
         if (Final_EEP_HE < 0 .or. Final_EEP_HE > maxval(key_eeps_he)) Final_EEP_HE = maxval(key_eeps_he)
     
-        low_mass_eep_he = low_mass_final_eep
         if(low_mass_eep_he<1 .or. low_mass_eep_he>final_eep_he) low_mass_eep_he = Final_EEP_HE
-        
-        high_mass_eep_he = high_mass_final_eep
         if(high_mass_eep_he<1 .or. high_mass_eep_he>final_eep_he) high_mass_eep_he = Final_EEP_HE
         
 !        print*, 'eep he', Initial_EEP_he, final_eep_he, low_mass_eep_he, high_mass_eep_he
@@ -946,7 +994,6 @@ module z_support
     subroutine check_tracks(num_tracks)
         integer :: n, abs_min_ntrack
         real(dp) :: co_core, he_core, min_val
-        logical :: debug
         integer, intent(out):: num_tracks
         real(dp), allocatable, dimension(:) :: core_mass
         real(dp), allocatable, dimension(:) :: sgn
@@ -956,7 +1003,6 @@ module z_support
         ! checks for the completeness of the tracks
         ! and whether their core masses are correct or not
         ! converts columns into log where needed
-        debug = .false.
 
         do n = 1,size(xa)
             xa(n)% complete = .true.
@@ -1060,7 +1106,7 @@ module z_support
             y(k)% is_he_track = xa(n)% is_he_track
             y(k)% complete = xa(n)% complete
         
-            if (read_all_columns) then
+            if ((front_end == main) .and. read_all_columns) then
                 if (debug) print*, 'using all columns'
                 y(k)% ncol = xa(n)% ncol
                 allocate(y(k)% tr(y(k)% ncol, y(k)% ntrack), y(k)% cols(y(k)% ncol))
@@ -1345,17 +1391,14 @@ module z_support
         !now redefine zpars with new values
         Mcrit(3:7)% mass = zpars(1:5)
         
-        if (defined(Z_He)) then
-            zpars(12) = Z_He
+        if (defined(Y_files)) then
+            zpars(12) = Y_files
         elseif (xa(1)% initial_Y >0.d0)then
             zpars(12) = xa(1)% initial_Y
         endif
 
-        if (defined(Z_H)) then
-            zpars(11) = Z_H
-        else
-            zpars(11) = 1-initial_Z-Z_He
-        endif
+        
+        zpars(11) = 1-initial_Z-zpars(12)
         
         Z04 = initial_Z**0.4
         

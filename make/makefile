@@ -7,6 +7,7 @@ FC=gfortran
 
 WARN= -Wno-tabs -Wno-maybe-uninitialized -fimplicit-none  -Wsurprising  -Waliasing -pedantic
 DEBUG= -g3 -O2 -fbacktrace -fcheck=all -fbounds-check
+#-ffpe-trap=zero,overflow,underflow
 
 FFLAGS1= -ffree-form -fimplicit-none $(WARN) $(DEBUG)
 FFLAGS2= -ffixed-form -fimplicit-none $(DEBUG)

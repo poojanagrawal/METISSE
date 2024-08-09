@@ -22,7 +22,7 @@ module track_support
     integer, parameter :: undefined_i = -1
     
     logical :: verbose, use_sse_NHe
-    logical :: write_track_to_file, write_eep_file, write_error_to_file
+    logical :: write_output_to_file, write_eep_file, write_error_to_file
     integer :: err_unit, out_unit
 
     integer :: front_end = -1
@@ -30,7 +30,7 @@ module track_support
     integer, parameter :: BSE = 1
     integer, parameter :: COSMIC = 2
 
-    character(len=strlen) :: METISSE_DIR,TRACKS_DIR,TRACKS_DIR_HE
+    character(len=strlen) :: METISSE_DIR,METALLICITY_DIR,METALLICITY_DIR_HE
 
     ! for use when constructing EEP distance
     logical :: weight_center_rho_T_by_Xc
@@ -121,11 +121,11 @@ module track_support
                                 log_Tc,c12_mass_frac,o16_mass_frac, he4_mass_frac, &
                                 Lum_colname,Teff_colname,Radius_colname, &
                                 he_core_radius, co_core_radius, mass_conv_envelope, &
-                                radius_conv_envelope, binding_energy_colname !, moment_of_inertia
+                                radius_conv_envelope, binding_energy_colname
 
     integer :: i_age, i_age2, i_mass, i_logTe, i_logL, i_logR, i_he_core, i_co_core
-    integer :: i_RHe_core,i_RCO_core,i_mcenv, i_Rcenv, i_binding_energy !,i_MoI
-    integer :: i_he_RCO,i_he_mcenv, i_he_Rcenv,i_he_age!,i_he_MoI
+    integer :: i_RHe_core,i_RCO_core,i_mcenv, i_Rcenv, i_binding_energy
+    integer :: i_he_RCO,i_he_mcenv, i_he_Rcenv,i_he_age
 
     integer :: i_Tc, i_he4, i_c12,i_o16
     integer :: i_Xc, i_Yc, i_Cc,i_Rhoc, i_gamma, i_surfH
@@ -136,7 +136,6 @@ module track_support
     integer, parameter :: max_col = 180
     integer, parameter :: column_int=0
     integer, parameter :: column_dbl=1
-!    character(len=strlen) :: extra_core_columns_names        !TODO: make it flexible
 
     type column
      character(len=col_width) :: name
@@ -160,7 +159,7 @@ module track_support
         real(dp) :: luminosity,Teff,radius
         real(dp) :: log_L,log_Teff,log_R                !log values
         real(dp) :: epoch, age, age_old,age2
-        real(dp) :: delta, dt, dms, mcenv, rcenv,bhspin!,moi
+        real(dp) :: delta, dt, dms, mcenv, rcenv,bhspin
         real(dp) :: binding_energy
     end type star_parameters
     
@@ -224,8 +223,8 @@ module track_support
     logical :: read_mass_from_file
     
     !for z_support
-    real(dp) :: Mhook, Mhef,Mfgb, Mup, Mec, Mextra,Mup_core,Mec_core
-    real(dp) :: Z04, Z_H, Z_He
+    real(dp) :: Mhook, Mhef,Mfgb, Mup, Mec, Mextra,Mup_core,Mec_core,Z04
+    real(dp), allocatable :: Z_H(:), Z_He(:)
     integer, allocatable :: m_cutoff(:), m_cutoff_he(:)
 
     type critical_mass
@@ -244,7 +243,7 @@ module track_support
 
     !in case of direct call
     real(dp) :: max_NS_mass         !maximum NS mass
-    logical :: construct_wd_track, allow_electron_capture, use_Initial_final_mass_relation
+    logical :: construct_postagb_track, allow_electron_capture, use_Initial_final_mass_relation
     character (len=strlen) :: BHNS_mass_scheme, WD_mass_scheme
 !    real(dp) :: mc1, mc2 !mass cutoffs for Belczynski methods
     real(dp) :: pts_1,pts_2,pts_3

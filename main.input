@@ -13,7 +13,7 @@ max_mass = 100.0
 
 BHNS_mass_scheme = 'Belczynski2008'
 
-write_track_to_file = .true.        !SSE like output file
+write_output_to_file = .true.        !SSE like output file
 /
 
 

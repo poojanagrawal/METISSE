@@ -7,31 +7,34 @@
 
     !-------FILE DETAILS-------------
     
-    ! e.g., '.eep','.dat'
-    file_extension = ''
     
-    ! Set read_eep_files to true only for MIST-like files
-    ! generated from A Dotter's ISO code (Dotter 2016).
-    ! If true; then extra_char, total_cols
-    ! and other information are can be read directly from files.
-    ! Set it to false other type of files
+    
+    ! Set `read_eep_files` to .true. only for MIST-style files;
+    ! set to .false. for other types of files.
+    !If .true., other options in this section do not need to be provided.
+    ! The required details are read directly from the input files.
 
     read_eep_files = .false.
     
-    ! Header for reading column names from files
-    ! i.e. the line number where column names are listed
-    ! Set it to <=0 if the input files do not contain column names
-    ! and list the names in the column_name_file
-   
+    
+    ! File extension of the input files (e.g., ‘.eep’, ‘.dat’).
+    ! METISSE will look for files ending with file_extension
+    ! in the eep_tracks_dir.
+    file_extension = ''
+    
+    ! Line number corresponding to the column names in the input files for EEP-tracks.
+    ! If the input files do not contain column names then
+    ! Set header_location to <=0 and
+    ! specify columns using column_name_file.
+
     header_location = -1
     
-    ! Any extra character present in the header line (if any)
+    ! Any extra character present at the beginning of the header line
     
     extra_char = ''
 
-    ! If the header is <=0, then column names cannot be determined from the input files
-    ! For such cases, specify 'column_name_file' for determining the name and the order of columns
-    ! Note that this is different from the key_columns_file which specifies what subset of these columns is to be used
+    ! File containing column names (one per line) if header_location <= 0
+    ! and column names cannot be determined from the input files.
 
     column_name_file = ''
     
@@ -40,24 +43,23 @@
     total_cols = -1
 
     !-------COLUMN NAMES---------------------------------
-    ! Since columns can be named in different ways
-    ! Use this section to names of some of the important columns
-    ! Kindly ensure that the units are correct
+    ! Use this section to specify essential column names.
+    ! Make sure that the units are correct.
     
     ! ESSENTIAL columns-----------------------------------
-    ! Code will stop if it cannot locate these columns
+    ! METISSE will stop and raise an error if these columns can not be located.
 
-    !age in years
+    ! age in years
     age_colname = ''
     
-    !mass of the star in solar units
+    ! mass of the star in solar units
     mass_colname = ''
     
     ! log10 of luminosity (in solar units)
     log_L_colname = ''
     
     ! Stellar luminosity in solar units (alternative to log_L_colname)
-    ! Used only if log_L_colname is not supplied
+    ! Used only if log_L_colname is not provided
     ! Either log_L_colname or Lum_colname should be provided
     Lum_colname = ''
     
@@ -65,9 +67,8 @@
     ! log10 of radius (in solar units)
     log_R_colname = ''
      
-     
     ! Stellar radius in solar units (alternative to log_R_colname)
-    ! Used only if log_R_colname is not supplied
+    ! Used only if log_R_colname is not provided
     ! Either log_R_colname or Radius_colname should be provided
     Radius_colname = ''
    
@@ -76,28 +77,25 @@
     
     ! mass of C enriched/He depleted core in solar units
     co_core_mass = ''
-
-    !
+    
     ! (OPTIONAL) additional columns----------------------
     ! 
-    ! The code will not stop if these column names are not provided
-    ! However, it will revert to using SSE formulae for these quantities
+    ! METISSE will raise error but not stop if these column names are not provided.
+    ! However, it will revert to using SSE formulae where needed.
 
     ! binding_energy of the envelope
+    ! in ergs (do not use log)
     binding_energy_colname = ''
     
-    
     ! radius of He enriched/H depleted core
-    ! in solar units (can not use log)
+    ! in solar units (do not use log)
     
     he_core_radius = ''
     
-    
     ! radius of C enriched/He depleted core
-    !in solar units (can not use log)
+    !in solar units (do not use log)
     
     co_core_radius = ''
-    
     
     ! mass of the convective envelope in solar units
     
@@ -108,16 +106,15 @@
     radius_conv_envelope = ''
     
     ! The following are required for determining various zparameters
-    ! If these are not supplied, then user-defined values for zparameters are used
-    ! If zparameters are not supplied either (in metallicity file), then SSE's formulae are used
+    ! If these are not provided, then user-defined values for zparameters are used
+    ! If zparameters are not provided either (in metallicity file), then SSE's formulae are used
 
 
     ! log10 of surface temperature (in K)
     log_T_colname = ''
      
-     
     ! Surface temperature in K (alternative to log_T_colname)
-    ! Used only if log_T_colname is not supplied
+    ! Used only if log_T_colname is not provided
     Teff_colname = ''
 
     ! central temperature in log units
@@ -148,10 +145,12 @@
     cCBurn_EEP = -1
     post_AGB_EEP = -1
 
-    !files will be read from this EEP/line number
-    !if <0, then ZAMS_EEP is used
+    ! files will be read from this EEP
+    ! if <0, then ZAMS_EEP is used
+    
     Initial_EEP = -1
     !to this EEP/line
+    
     ! if <0 then maximum of the above listed EEPs is used
     Final_EEP = -1
     
@@ -160,37 +159,41 @@
     Extra_EEP3 = -1
     
     !----------- EEP DETAILS for He stars----------
-    ! Use the following syntax to provide he stars eeps in your format file
+    ! The following eeps are used to provide key eeps for Helium stars
     
-    !ZAMS_HE_EEP = -1
-    !TAMS_HE_EEP = -1
-    !GB_HE_EEP = -1
-    !cCBurn_HE_EEP = -1
-    !post_AGB_HE_EEP = -1
-    
+    cHeBurn_EEP = -1    ! Zero Age Helium Main Sequence
+    TA_cHeB_EEP = -1    ! Terminal Age Helium Main Sequence
+    BGB_EEP = -1        ! Base of the Giant Branch
+
+    TPAGB_EEP = -1      ! end of AGB
+    cCBurn_EEP = -1     ! end of core Carbon Burning
+    post_AGB_EEP = -1   ! Post-AGB (end of AGB to WD cooling track)
     
     !--- HOW TO DEAL WITH INCOMPLETE TRACKS--------
 
-    ! Usually two to four tracks neighboring are used for interpolation.
-    ! However, if any of them is incomplete,
-    ! then the interpolated track is also rendered incomplete.
-    ! If fix_track is true, METISSE relaxes the criteria for finding
-    ! the neighboring tracks in above cases and tries to get a complete track.
+    ! For a given initial mass, METISSE calculates an evolutionary track
+    ! by interpolating between the corresponding EEPs of neighbouring mass
+    ! tracks. If any of the neighbouring tracks is incomplete, the
+    ! interpolated track is also rendered incomplete.
+    ! This section explains how METIISE identifies incomplete tracks
+    ! and attempts to fill in the missing data.
+    
+    ! the completeness of tracks is determined by the following two:
+    ! Final eep for stars with M< Mec
+    low_mass_final_eep = -1
+    ! Final for stars with M>= Mec
+    high_mass_final_eep = -1
+    
+
+    ! if fix_track is true,  METISSE relaxes criteria for finding
+    ! neighboring tracks to fix incomplete tracks.
     
     fix_track = .true.
-
-    ! if fix_track is true, then
-    ! the completeness of tracks is determined by the following two:
     
-    ! for stars with M< Mec
-    low_mass_final_eep = -1
-    ! for stars with M>= Mec
-    high_mass_final_eep = -1
-
-    ! When fixing an incomplete track
-    ! Search for the new neighboring tracks for interpolation
-    ! within the mass range of initial_mass - (initial_mass*lookup_index)
-    ! and initial_mass + (initial_mass*lookup_index)]
+    ! Determines the mass range for searching neighboring tracks
+    ! when fixing incomplete tracks.
+    ! The range is M-(M*lookup_index) and M+(M*lookup_index),
+    ! where M is the initial mass of the star.
  
     lookup_index = 1.0
 
