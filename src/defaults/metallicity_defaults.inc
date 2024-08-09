@@ -3,17 +3,17 @@
 ! Make sure to ADD a new line at the end (after / symbol) in the inlist
 
 !metallicity_controls
-    ! Location of the folder containing input files for a given metallicity
-
+    ! Location of the folder containing the EEP tracks relative to the metallicity file.
+    !Empty string will raise an error
+    
     eep_tracks_dir = ''
 
-    ! Metallicity of input tracks
-    ! It is only used to cross-check 
-    ! against input Z to avoid mistakes
+    ! Metallicity value of the EEP tracks.
+    ! This is cross-matched against the input metallicity value.
     
     Z_files = -1.0
 
-    ! Details about the file structure (see format_defaults.dat)
+    ! Location of the format file relative to the metallicity file.
     ! Empty string will raise an error
 
     format_file = ''
