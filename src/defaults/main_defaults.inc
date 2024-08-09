@@ -12,7 +12,7 @@
 
   ! EVOLUTION CONTROLS
    
-    ! There are two ways stellar mass values can be supplied to METISSE:
+    ! There are two ways stellar mass values can be provided to METISSE:
 
     !1. `read_mass_from_file = .false.`
     !Use `min_mass` to specify the lower limit, `max_mass` for upper limit and `number_of_tracks` to be evolved uniformly distributed in mass between the two limits.
@@ -41,38 +41,28 @@
 
   ! REMNANT CONTROLS
 
-
     ! For White dwarfs, two prescriptions are available for calculating luminosity:
 
-    ! (1) p. 85 of [Shapiro S. L., Teukolsky S. A., 1983](https://ui.adsabs.harvard.edu/abs/1983bhwd.book.....S/abstract)
-
-    ! (2) [Hurley J. R., Shara M. M., 2003, ApJ, 589, 179](https://iopscience.iop.org/article/10.1086/374637)
-
-    ! Options - "Mestel", "Modified_mestel"
+    !(1) “Mestel” - Shapiro S. L., Teukolsky S. A., 1983
+    !(2) “Modified_mestel” - Hurley J. R., Shara M. M., 2003
     WD_mass_scheme = 'Modified_mestel'
 
-    
     ! Only for White Dwarfs
-    Use_initial_final_mass_relation = .false.       
-
+    !If .true. use the initial final mass relation for white dwarfs
+    ! from Han, Z, Podsiadlowski, P., Eggleton, P. P. 1995.
+    Use_initial_final_mass_relation = .false.
     
     ! The type and mass of the NS/BH can  be  calculated  from  one  of  the  following  prescriptions:
 
-    !(1) Default SSE
+    !(1) “original_SSE” - Hurley et al. 2000
+    !(2) “Belczynski2002” - Belczynski et al. 2002
+    !(3) “Belczynski2008” - Belczynski et al. 2008
+    !(4) “Eldridge_Tout2004” - Eldridge J. J., Tout C. A., 2004
 
-    !(2) [Belczynski et al. 2002, ApJ, 572, 407](https://iopscience.iop.org/article/10.1086/340304)
-
-    !(3) [Eldridge J. J., Tout C. A., 2004, MNRAS, 353, 87](https://ui.adsabs.harvard.edu/abs/2004MNRAS.353...87E/abstract)
-
-    !(4) [Belczynski et al. 2008, ApJS, 174, 223](https://iopscience.iop.org/article/10.1086/521026)
-
-
-    ! Options - "original_SSE", "Belczynski2002", "Belczynski2008", "Eldridge_Tout2004"
     BHNS_mass_scheme = 'Belczynski2008'
-
     
-    ! Maximum neutron star mass 
-    ! Suggested 1.8 for BHNS_mass_scheme="original_SSE", 3.0 otherwise
+    ! Maximum neutron star mass.
+    ! Recommended 1.8 for BHNS_mass_scheme = “original_SSE”, 3.0 otherwise.
 
     Max_NS_mass = 3.d0
    
@@ -81,9 +71,9 @@
     allow_electron_capture = .true.       
     
   ! TIMESCALE CONTROLS
-
     
-    !Similar to SSE, METISSE determines timesteps as the fractions of the time spent in a phase
+    !Like SSE, METISSE uses pts variables to determine the timestep
+    ! as the decimal fractions of the time spent in a phase.
     !pts_1 - 95% of MS, HeMS
     !pts_2 - last 5% of MS, cHeBurn, HeHG, HeGB
     !pts_3 - HG, RGB, EAGB, TPAGB
@@ -94,7 +84,30 @@
 
   !OUTPUT CONTROLS
 
-    ! 'write_track_to_file' generates a SSE style output file 
-    ! only at the END of the evolution
+    ! Generate a SSE-style output file (file ending in .dat) at the END of the evolution.
 
-    write_track_to_file = .false.
+    write_output_to_file = .false.
+    
+  ! COLUMN CONTROLS
+    
+    ! By default METISSE only interpolates in the essential columns
+    ! and the additional columns specified in the format_file,
+    ! as interpolating in all columns of input files can slow down computations
+    ! Using fewer columns means fewer calculations, therefore faster runs.
+    ! If read_all_columns is true then all columns are used.
+    ! The interpolated quantities are printed in MIST-style files
+    ! if write_eep_file is true.
+    
+    read_all_columns = .false.
+
+    ! Extra columns to be used for interpolation if read_all_columns is false
+    ! Up to 100 column names can be listed as strings, separated by commas.
+    ! (irrespective of the order or whitespace between the strings).
+
+    extra_columns = ''
+
+    ! Alternative way for listing extra column names.
+    ! List one column name per line in the extra_columns_file
+    ! and provide path of the file here.
+    
+    extra_columns_file = ''

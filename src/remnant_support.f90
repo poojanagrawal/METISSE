@@ -28,7 +28,6 @@
     integer :: if_flag = 0
     contains
     
-
     logical function check_remnant_phase(pars,mc_max)
         type(star_parameters) :: pars
         real(dp) :: mc_max,mc_threshold
@@ -70,7 +69,6 @@
         endif
         
         end function check_remnant_phase
-        
         
         subroutine check_early_end(t,dt_hold,id)
             real(dp) :: dt_hold
@@ -138,7 +136,7 @@
         integer, intent(in) :: old_phase
         type(track), pointer :: t
 
-        ! If a star becomes a WD, and construct_wd_track is true,
+        ! If a star becomes a WD, and construct_postagb_track is true,
         ! then we use post_agb_parameters and evolve_after_agb
         ! to mimic post-agb evolution of star on HRD until WD cooling phase is reached.
         ! However naked helium stars don't go through this process
@@ -147,7 +145,7 @@
         
         !first check if the remnant is a WD
         if (t% pars% phase>HeWD .and. t% pars% phase<=ONeWD) then
-            if (old_phase <=TPAGB .and. construct_wd_track) then
+            if (old_phase <=TPAGB .and. construct_postagb_track) then
                 ! contruct the track
                 t% agb% phase_wd = t% pars% phase
                 t% pars% phase = TPAGB
@@ -589,7 +587,7 @@
     end subroutine evolve_after_envelope_loss
 
 
-    !for constructing post-main sequence phase if construct_wd_track is true
+    !for constructing post-main sequence phase if construct_postagb_track is true
     real(dp) function fit_Z_t1(Z)
     real(dp):: Z,x
         x = log10(Z)

@@ -109,6 +109,7 @@ module sse_support
     integer :: j
     
     mass = t% pars% mass
+    GB = -1.d0
     
     GB(1) = MAX(-4.8d0,MIN(-5.7d0+0.8d0*mass,-4.1d0+0.14d0*mass))
     GB(1) = 10.d0**GB(1)
@@ -116,21 +117,21 @@ module sse_support
     GB(8) = 8.0d-05
     GB(3) = MAX(3.0d+04,500.d0 + 1.75d+04*mass**0.6d0)
     if(mass.le.2.0)then
-         GB(4) = zpars(6)
+!         GB(4) = zpars(6)
          GB(5) = 6.d0
          GB(6) = 3.d0
     elseif(mass.lt.2.5)then
-         dx = zpars(6) - (0.975d0*zpars(6) - 0.18d0*2.5d0)
-         GB(4) = zpars(6) - dx*(mass - 2.d0)/(0.5d0)
+!         dx = zpars(6) - (0.975d0*zpars(6) - 0.18d0*2.5d0)
+!         GB(4) = zpars(6) - dx*(mass - 2.d0)/(0.5d0)
          GB(5) = 6.d0 - (mass - 2.d0)/(0.5d0)
          GB(6) = 3.d0 - (mass - 2.d0)/(0.5d0)
     else
-         GB(4) = MAX(-1.d0,0.5d0*zpars(6) - 0.06d0*mass)
-         GB(4) = MAX(GB(4),0.975d0*zpars(6) - 0.18d0*mass)
+!         GB(4) = MAX(-1.d0,0.5d0*zpars(6) - 0.06d0*mass)
+!         GB(4) = MAX(GB(4),0.975d0*zpars(6) - 0.18d0*mass)
          GB(5) = 5.d0
          GB(6) = 2.d0
     endif
-    GB(4) = 10.d0**GB(4)
+!    GB(4) = 10.d0**GB(4)
     GB(7) = (GB(3)/GB(4))**(1.d0/(GB(5)-GB(6)))
       
      if(mass.le.zpars(2).and. identified(BGB_EEP))then                   !MHeF
