@@ -85,23 +85,25 @@ subroutine METISSE_star(kw,mass,mt,tm,tn,tscls,lums,GB,zpars,dtm,id)
         if(debug.and.t% star_type==switch)print*, 'switching from', t% pars% phase,'to',kw
         if (t% pars% age<0.d0) t% pars% age = 0.d0
         
+        t% pars% dms = 0.d0
+        t% ms_old = t% MS_time
+        t% pars% age_old = t% pars% age
         t% post_agb = .false.
         t% pars% delta = 0.d0
         t% pars% phase = kw
         t% zams_mass = mass
         t% pars% mass = mt
         t% initial_mass_old = t% initial_mass
+        
         Mnew = t% pars% mass
         
         call get_initial_mass_for_new_track(t,idd,mnew,eep_m)
         call interpolate_mass(t,exclude_core)
         
+        
         call calculate_timescales(t)
         t% times_new = t% times
-        t% ms_old = t% MS_time
-        t% pars% age_old = t% pars% age
         t% tr(age_col,:) = t% tr(i_age2,:)
-        t% pars% dms = 0.d0
         if (eep_m>0 .and. eep_m<=t% ntrack) t% pars% age = min(t% tr(age_col,eep_m), t% times(11)-1d-6)
         if (debug)print*, 'age after switch',t% pars% age,t% times(11),t% initial_mass0,mass
         

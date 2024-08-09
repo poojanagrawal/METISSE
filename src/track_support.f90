@@ -22,7 +22,7 @@ module track_support
     integer, parameter :: undefined_i = -1
     
     logical :: verbose, use_sse_NHe
-    logical :: write_track_to_file, write_eep_file, write_error_to_file
+    logical :: write_output_to_file, write_eep_file, write_error_to_file
     integer :: err_unit, out_unit
 
     integer :: front_end = -1
@@ -159,7 +159,7 @@ module track_support
         real(dp) :: luminosity,Teff,radius
         real(dp) :: log_L,log_Teff,log_R                !log values
         real(dp) :: epoch, age, age_old,age2
-        real(dp) :: delta, dt, dms, mcenv, rcenv,bhspin!,moi
+        real(dp) :: delta, dt, dms, mcenv, rcenv,bhspin
         real(dp) :: binding_energy
     end type star_parameters
     
@@ -243,7 +243,7 @@ module track_support
 
     !in case of direct call
     real(dp) :: max_NS_mass         !maximum NS mass
-    logical :: construct_wd_track, allow_electron_capture, use_Initial_final_mass_relation
+    logical :: construct_postagb_track, allow_electron_capture, use_Initial_final_mass_relation
     character (len=strlen) :: BHNS_mass_scheme, WD_mass_scheme
 !    real(dp) :: mc1, mc2 !mass cutoffs for Belczynski methods
     real(dp) :: pts_1,pts_2,pts_3

@@ -18,38 +18,20 @@
 
     format_file = ''
 
-    ! Interpolating in all columns of input files can slow down computations 
-    ! By default METISSE only interpolates in the essential columns 
-    ! and the additional columns specified in the format_file.
-    ! Using fewer columns means fewer calculations, therefore faster runs.
-    ! If read_all_columns is true then all columns are used.
-    
-    read_all_columns = .false.
+    ! Helium abundance
+    ! Default is SSE formulae
+    ! If<0 then it is calculated from Z as 0.24 + 2*Z
 
-    ! NOTE that for binary evolution calculations, ONLY default columns are used,
-    ! irrespective of whether read_all_columns is true or not.
-    ! Quantities interpolated using any other columns are currently discarded.
-
-
-    ! Extra columns to be used for interpolation if read_all_columns is false 
-    ! Useful only for single-star evolution calculations with implicit mass loss.
-    
-    ! The interpolated quantities are printed in MIST (Choi et al. 2016) style files
-    ! if write_eep_file is true.
-    ! You can list up to 100 column names here, as strings separated by a comma 
-    ! (irrespective of the order or whitespace between the strings).
-
-    extra_columns = ''
-
-    ! Alternatively, you can list the extra columns names in a text file 
-    ! (one column name per line) and specify the location of that file in extra_columns_file
-    
-    extra_columns_file = ''
-
+    Y_files = -1.0
   
     ! Z PARAMETERS/ mass cutoffs
-    ! If < 0 then the values are calculated by the code
-    ! If>0 then these values are instead used 
+    ! Mhook - Mass below which hook does not appear on the MS.
+
+    ! Mhef - Mass above which helium ignition occurs non-degenerately.
+    ! Mfgb - Mass above which helium ignition occurs on the HG.
+    ! Mup - Mass below which carbon ignition does not occur.
+    ! Mec - Mass above which carbon ignites in the centre.
+    ! If negative, these values are calculated by the code.
 
     Mhook = -1.0
     Mhef = -1.0
@@ -57,14 +39,7 @@
     Mup = -1.0
     Mec = -1.0
 
-    ! Extra mass cutoff- if any
-
-    Mextra = -1.0       
-
-    ! Helium abundance
-    ! Default is SSE formulae
-    ! If Y_files <0 then it is calculated from Z as 0.24 + 2*Z
-
-    Y_files = -1.0
+    ! Mextra - Extra mass cutoff (if any).
+    Mextra = -1.0
 
 

@@ -30,23 +30,24 @@ module z_support
     real(dp) :: center_carbon_limit = 1d-4
     real(dp) :: log_center_T_limit = 9d0
     real(dp) :: high_mass_limit = 1d1 !Msun
-    real(dp) :: he_core_mass_limit = 2.2
+    real(dp) :: he_core_mass_limit = 2.2d0 !Msun
 
     logical :: debug_z
 
     namelist /SSE_input_controls/ initial_Z, max_age,read_mass_from_file,&
                         input_mass_file, number_of_tracks, max_mass, min_mass, &
                         WD_mass_scheme,use_initial_final_mass_relation, allow_electron_capture, &
-                        BHNS_mass_scheme, max_NS_mass,pts_1, pts_2, pts_3, write_track_to_file
-
+                        BHNS_mass_scheme, max_NS_mass,pts_1, pts_2, pts_3, write_output_to_file, &
+                        read_all_columns, extra_columns, extra_columns_file
+                        
     namelist /METISSE_input_controls/ tracks_dir, tracks_dir_he, &
                         Z_accuracy_limit, mass_accuracy_limit, verbose, &
-                        write_eep_file,write_error_to_file, construct_wd_track
+                        write_eep_file, write_error_to_file, construct_postagb_track
             
-    namelist /metallicity_controls/ INPUT_FILES_DIR, Z_files,format_file, extra_columns_file, &
-                        read_all_columns, extra_columns,Mhook, Mhef, Mfgb, Mup, Mec, Mextra, Y_files
+    namelist /metallicity_controls/ INPUT_FILES_DIR, Z_files,format_file,Y_files, &
+                        Mhook, Mhef, Mfgb, Mup, Mec, Mextra
                         
-    namelist /format_controls/ file_extension, read_eep_files,total_cols,&
+    namelist /format_controls/ file_extension, read_eep_files, total_cols,&
                         extra_char, header_location, column_name_file, &
                         PreMS_EEP, ZAMS_EEP, IAMS_EEP, TAMS_EEP, BGB_EEP, cHeIgnition_EEP, &
                         cHeBurn_EEP, TA_cHeB_EEP, TPAGB_EEP, cCBurn_EEP, post_AGB_EEP, &
@@ -62,6 +63,8 @@ module z_support
 
     subroutine read_defaults()
         debug_z = .false.
+        !path is relative to the executable
+        METISSE_DIR = '.'
         include 'defaults/metisse_defaults.inc'
     end subroutine read_defaults
     
@@ -602,14 +605,14 @@ module z_support
         type(column), intent(in) :: cols(:)
         integer, intent(in) :: ncol
         logical, intent(in) :: is_he_track
-        
-        type(column) :: temp(ncol)
-        type(column), allocatable :: temp_extra_columns(:)
-        integer :: i,j,n,c,ierr
+        type(column), allocatable :: temp(:)
+        integer :: i,j,n,ierr
      
         if (debug_z) print*, 'assigning key columns'
 
         ! Essential columns get reassigned here to match to reduced array format
+        
+        allocate(temp(ncol))
         temp% loc = -1
         temp% name  =  ''
 
@@ -635,6 +638,35 @@ module z_support
             if (i_mcenv>0) call assign_sgl_col(temp, i_mcenv, mass_conv_envelope,n)
             if (i_Rcenv>0) call assign_sgl_col(temp, i_Rcenv, radius_conv_envelope,n)
         endif
+        
+        if (front_end == main) call check_for_extra_columns(cols,temp,n)
+        
+        allocate(key_cols(n-1))
+        key_cols% name = temp(1:n-1)% name
+        key_cols% loc = temp(1:n-1)% loc
+
+        i_age = n
+        if(is_he_track) i_he_age = n
+        deallocate(temp)
+        
+    end subroutine set_key_columns
+
+    subroutine assign_sgl_col(temp, col, colname,n)
+        type(column) :: temp(:)
+        character(len=col_width), intent(in) :: colname
+        integer, intent(inout):: n,col
+        
+        temp(n)% loc = col
+        temp(n)% name = colname
+        col = n
+        n = n+1
+    end subroutine
+    
+    subroutine check_for_extra_columns(cols,temp,n)
+        type(column), intent(in) :: cols(:)
+        type(column), allocatable :: temp(:)
+        type(column), allocatable :: temp_extra_columns(:)
+        integer :: i,j,n,c,ierr
         
         c = count(len_trim(extra_columns)>0)
         if (c>0) then
@@ -662,26 +694,8 @@ module z_support
                 deallocate(temp_extra_columns)
             endif
         endif
-    
-        allocate(key_cols(n-1))
-        key_cols% name = temp(1:n-1)% name
-        key_cols% loc = temp(1:n-1)% loc
 
-        i_age = n
-        if(is_he_track) i_he_age = n
-        
-    end subroutine set_key_columns
-
-    subroutine assign_sgl_col(temp, col, colname,n)
-        type(column) :: temp(:)
-        character(len=col_width), intent(in) :: colname
-        integer, intent(inout):: n,col
-        
-        temp(n)% loc = col
-        temp(n)% name = colname
-        col = n
-        n = n+1
-    end subroutine
+    end subroutine check_for_extra_columns
 
     !reading column names from file - from iso_eep_support.f90
     subroutine process_columns(filename,cols,ierr)
@@ -821,6 +835,8 @@ module z_support
         neep = count(temp > 0,1)
         allocate(key_eeps(neep))
         key_eeps = pack(temp,temp > 0)
+        
+        if (cHeIgnition_EEP<0)  cHeIgnition_EEP = cHeBurn_EEP
         
         !define initial and final eep if not already defined
         if(Initial_EEP <0 .or. Initial_EEP< minval(key_eeps)) Initial_EEP = ZAMS_EEP
@@ -1090,7 +1106,7 @@ module z_support
             y(k)% is_he_track = xa(n)% is_he_track
             y(k)% complete = xa(n)% complete
         
-            if (read_all_columns) then
+            if ((front_end == main) .and. read_all_columns) then
                 if (debug) print*, 'using all columns'
                 y(k)% ncol = xa(n)% ncol
                 allocate(y(k)% tr(y(k)% ncol, y(k)% ntrack), y(k)% cols(y(k)% ncol))

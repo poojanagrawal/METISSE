@@ -90,7 +90,7 @@
             ELSEIF (check_ge(t% pars% core_mass,t% pars% mass)) THEN
                 !check if envelope has been lost
     
-                if (debug) print*, "envelope lost at",t% pars% mass, t% pars% age,t% pars% phase
+                if (debug)print*,"envelope lost at",t% pars% age,t% pars% phase,t% pars% mass,t% pars% core_mass
                 
                 if (t% pars% phase == TPAGB) then
                     ! TPAGB star becomes a CO-WD/ONe WD upon losing envelope
@@ -163,7 +163,6 @@
                 if (t% pars% age .lt. t% times(i)) then
                     t% pars% phase = i
                     if (debug)print*,"phase",t% pars% age,t% times(t% pars% phase),t% pars% phase
-
                 endif
             enddo
             if (debug .and. t% pars% phase /= old_phase) &

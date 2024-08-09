@@ -178,7 +178,7 @@ subroutine METISSE_zcnsts(z,zpars,path_to_tracks,path_to_he_tracks,ierr)
             if (ierr/=0) then
                 write(out_unit,'(a,1p1e13.5)')" No matching Z_files found with Z_accuracy_limit =",Z_accuracy_limit
                 write(out_unit,*)"If needed, Z_accuracy_limit can be increased to match one of the available Z_files "
-                write(out_unit,'(1p1e13.5)') pack(Z_H, mask = Z_H>0)
+                write(out_unit,'(1p100e13.5)') pack(Z_H, mask = Z_H>0)
                 return
             endif
 
@@ -190,6 +190,7 @@ subroutine METISSE_zcnsts(z,zpars,path_to_tracks,path_to_he_tracks,ierr)
         call read_format(USE_DIR,format_file,ierr); if (ierr/=0) return
             
         !get filenames from input_files_dir
+        if (read_eep_files) file_extension = '.eep'
         call get_files_from_path(INPUT_FILES_DIR,file_extension,track_list,ierr)
         
         if (ierr/=0) then
@@ -205,7 +206,7 @@ subroutine METISSE_zcnsts(z,zpars,path_to_tracks,path_to_he_tracks,ierr)
         
         num_tracks = size(track_list)
         
-        write(out_unit,*)"Found: ", num_tracks, " tracks"
+        write(out_unit,*)"Found ", num_tracks, " tracks."
         allocate(xa(num_tracks))
         xa% filename = track_list
         get_cols = .true.
@@ -214,7 +215,7 @@ subroutine METISSE_zcnsts(z,zpars,path_to_tracks,path_to_he_tracks,ierr)
         if (i == 2) then
             xa% is_he_track = .true.
             call read_key_eeps_he()
-            if (debug) print*, "key he eeps", key_eeps_he
+            if (debug) print*, "key eeps for he stars", key_eeps_he
         else
             xa% is_he_track = .false.
             call read_key_eeps()
@@ -233,7 +234,6 @@ subroutine METISSE_zcnsts(z,zpars,path_to_tracks,path_to_he_tracks,ierr)
             !read and store column names in temp_cols from the the file if header location is not provided
             if (header_location<=0) then
                 if (debug) print*,"Reading column names from file"
-
                 call process_columns(column_name_file,temp_cols,ierr)
                 
                 if(ierr/=0) then
