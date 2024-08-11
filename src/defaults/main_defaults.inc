@@ -1,11 +1,7 @@
-! Defaults control for METISSE
+! Defaults for SSE_input_controls
 ! Do NOT make any changes to this file
-! Use evolve_metisse.in for input
-! Make sure to ADD a new line at the end (after / symbol)in the inlist
 
-
-! NOTE: SSE_input_controls in evolve_metisse.in are read 
-! only when METISSE is called directly through its main unit/ standalone mode.
+! NOTE: SSE_input_controls are read only when METISSE is called directly though its main unit.
 ! Otherwise, values provided by the overlying code are used.
     
 !SSE_input_controls
@@ -70,9 +66,9 @@
 
     allow_electron_capture = .true.       
     
-  ! TIMESCALE CONTROLS
+  ! TIMESTEP CONTROLS
     
-    !Like SSE, METISSE uses pts variables to determine the timestep
+    !Like SSE, METISSE uses `pts` variables to determine the timestep
     ! as the decimal fractions of the time spent in a phase.
     !pts_1 - 95% of MS, HeMS
     !pts_2 - last 5% of MS, cHeBurn, HeHG, HeGB

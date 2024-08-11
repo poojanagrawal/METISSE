@@ -1,11 +1,17 @@
-! Defaults control for METISSE
+! Defaults for METISSE_input_controls
 ! Do NOT make any changes to this file
-! Use evolve_metisse.in for input
-! Make sure to ADD a new line at the end (after / symbol)in the inlist
 
 !METISSE_input_controls
     
   ! TRACK CONTROLS
+
+    
+    ! METISSE looks for files(s) ending with *metallicity.in*
+    ! in the paths provided through 'METALLICITY_DIR' and 'METALLICITY_DIR_HE'
+    ! where 'METALLICITY_DIR' is for providing the location of the metallicity file(s)
+    ! for hydrogen star and  'METALLICITY_DIR_HE' is for providing the location
+    ! of the metallicity file(s) for the naked helium/stripped stars.
+    
     
     ! Absolute path to the folder containing the metallicity files
     ! for the hydrogen stars.
@@ -21,16 +27,9 @@
     METALLICITY_DIR_HE = ''
     
     
-    ! METISSE looks for files(s) ending with *metallicity.in*
-    ! in the paths provided through 'METALLICITY_DIR' and 'METALLICITY_DIR_HE'
-    ! where 'METALLICITY_DIR' is for providing the location of the metallicity file(s)
-    ! for hydrogen star and  'METALLICITY_DIR_HE' is for providing the location
-    ! of the metallicity file(s) for the naked helium/stripped stars.
-    
-    
     ! METISSE checks for a match in metallicity based on the condition:
-    !`(abs(Z_input-Z_required)/MIN(Z_input,Z_required)) > Z_accuracy_limit`,
-    ! where Z_input is the metallicity value of the tracks (from the metallicity file) and Z_required is the value we want to use.
+    !`(abs(Z_files-Z_input)/MIN(Z_files,Z_input)) > Z_accuracy_limit`,
+    ! where Z_files is the metallicity value of the tracks (from the metallicity file) and Z_input is the value we want to use.
     
     Z_accuracy_limit = 1d-2
 
@@ -43,7 +42,7 @@
     
   ! MISCELLANEOUS CONTROLS
 
-    ! if true, 'verbose' prints useful details when reading the files
+    ! if true, print important details when reading the input tracks on the terminal
 
     verbose = .false. 
 
