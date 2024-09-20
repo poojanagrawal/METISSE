@@ -1,3 +1,6 @@
+! METISSE-specific inputs
+! Make sure to ADD a new line at the end (after / symbol)in the inlist
+
 &METISSE_input_controls
 
 METALLICITY_DIR = '/Users/poojan/stellar_tracks/MESA/big_z/hydrogen'
