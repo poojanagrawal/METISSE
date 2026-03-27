@@ -55,7 +55,7 @@ module imf_support
           i=i+1
        end if
     end do
-    
+    print*, 'len', count(marray>0)
   end subroutine sample_kroupa_imf
 
 end module imf_support

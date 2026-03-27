@@ -127,7 +127,7 @@ module track_support
                                 log_Tc, c12_mass_frac, o16_mass_frac, he4_mass_frac, &
                                 Lum_colname, Teff_colname, Radius_colname, &
                                 he_core_radius, co_core_radius, mass_conv_envelope, &
-                                radius_conv_envelope, binding_energy_colname
+                                radius_conv_envelope, binding_energy_colname,
 
     integer:: i_age, i_age2, i_mass, i_logTe, i_logL, i_logR, i_he_core, i_co_core
     integer:: i_RHe_core, i_RCO_core, i_mcenv, i_Rcenv, i_binding_energy
@@ -136,8 +136,11 @@ module track_support
     integer:: i_Tc, i_he4, i_c12, i_o16
     integer:: i_Xc, i_Yc, i_Cc, i_Rhoc, i_gamma, i_surfH
 
-    integer:: number_of_core_columns
+    character(len = col_width), allocatable :: abundance_columns_names(:)
+    integer:: num_abundance_columns , abundace_points_per_mass
+    integer:: number_of_core_columns 
     integer, allocatable:: core_cols(:), core_cols_he(:)
+
     !for columns
     integer, parameter:: max_col = 180
     integer, parameter:: column_int = 0
@@ -189,7 +192,7 @@ module track_support
     type track
         character(len = strlen):: filename
         logical:: complete = .true., post_agb = .false.
-        logical:: reju !(can't use rejuvenated as it is already used for star_type)
+        logical:: reju = .false. !(can't use rejuvenated as it is already used for star_type)
         logical:: has_mass_loss = .false., is_he_track = .false.
 
         integer:: ncol, ntrack, neep, min_index, j_bgb, j_bgb0
@@ -206,10 +209,10 @@ module track_support
         ! initial_mass0 is the initial_mass of the track for which mass at tams is zams_mass
         ! initial_mass_old is the last initial mass of the track used for interpolation
         
-        ! Initial_mass/Initial_mass_old is needed for surface parameters, 
-        ! while Initial_mass0 is for core parameters(except MS when initial_mass0 is enough)
+        ! initial_mass/Initial_mass_old is needed for surface parameters, 
+        ! while initial_mass0 is for core parameters(except MS when initial_mass0 is enough)
         
-        real(dp), allocatable:: tr(:,:)
+        real(dp), allocatable:: tr(:,:), abundance(:,:)
         real(dp):: times(11), times_new(11)           !timescales
         real(dp):: MS_time, nuc_time, MS_old
         type(star_parameters):: pars    ! parameters at any instant

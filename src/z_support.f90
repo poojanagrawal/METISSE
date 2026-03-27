@@ -58,7 +58,8 @@ module z_support
                         Lum_colname, Teff_colname, Radius_colname, &
                         he_core_mass, co_core_mass, he_core_radius, co_core_radius, &
                         log_Tc, c12_mass_frac, o16_mass_frac,he4_mass_frac, &
-                        mass_conv_envelope, radius_conv_envelope, binding_energy_colname
+                        mass_conv_envelope, radius_conv_envelope, binding_energy_colname, &
+                        num_abundance_columns , abundace_points_per_mass,abundance_columns_names 
                         
     contains
     

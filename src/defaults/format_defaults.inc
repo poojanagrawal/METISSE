@@ -79,11 +79,7 @@
     ! (OPTIONAL) additional columns----------------------
     ! 
     ! METISSE will raise error but not stop if these column names are not provided.
-    ! However, it will revert to using SSE formulae where needed.
-
-    ! binding_energy of the envelope
-    ! in ergs (do not use log)
-    binding_energy_colname = ''
+    ! It will revert to using SSE formulae where possible.
     
     ! radius of He enriched/H depleted core
     ! in solar units (do not use log)
@@ -103,10 +99,14 @@
     
     radius_conv_envelope = ''
     
+    ! binding_energy of the envelope
+    ! in ergs (do not use log)
+
+    binding_energy_colname = ''
+
     ! The following are required for determining various zparameters
     ! If these are not provided, then user-defined values for zparameters are used
     ! If zparameters are not provided either (in metallicity file), then SSE's formulae are used
-
 
     ! log10 of surface temperature (in K)
     log_T_colname = ''
@@ -127,6 +127,9 @@
     ! oxygen-16 mass fraction at centre
     o16_mass_frac = ''
 
+    num_abundance_columns = 0
+    abundace_points_per_mass = 0
+    abundance_columns_names = ''
 
     !-------EEP DETAILS for Hydrogen stars-------------
     

@@ -84,7 +84,7 @@
             
             IF (check_ge(t% pars% age,t% times(11))) THEN
                 !check if have reached the end of the eep track
-                if (debug)print*,"end of file:aj,tn ",t% pars% age,t% times(11),t% times(max(kw,1))
+                if (debug)print*,"end of file:age,tn ",t% pars% age,t% times(11)
                 if (kw<5) call check_early_end(t,dt_hold,id)
                 
                 j_bagb = min(t% ntrack, TA_cHeB_EEP)
