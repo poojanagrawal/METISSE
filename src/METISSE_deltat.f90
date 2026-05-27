@@ -32,10 +32,10 @@
                 else
                     dt = pts2*(t% times(1)-tMS_hook)
                 endif
-                dtr = t% times(1)-age
+                dtr = MIN(t% nuc_time,t% times(1))-age
             case(HG)
                 dt = pts2*(t% times(2)-t% times(1))
-                dtr = t% times(2)-age
+                dtr = MIN(t% nuc_time,t% times(2))-age
 
             case(RGB)
                 dt = pts2*(t% times(3)- t% times(2))

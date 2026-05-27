@@ -913,9 +913,14 @@ module interp_support
         implicit none
         
         type(track), pointer:: t
-        integer:: i
-        real(dp), pointer:: age(:)=> NULL()
+        integer:: j, max_len, iter, max_iter
+        real(dp), pointer:: age(:), core_mass(:), total_mass(:)
+        real(dp) :: m_mid, mc_mid, tmid, age_start, age_end
 
+
+        ! age(:) => NULL() 
+        ! core_mass(:)  => NULL()  
+        ! total_mass(:)  => NULL() 
 
         if (t% is_he_track) then
             call calculate_he_timescales(t)
@@ -924,47 +929,83 @@ module interp_support
         
         age => t% tr(i_age2, :)
         t% times = undefined
+        max_len = min(Final_EEP, t% ntrack)
 
-        do i = 1, t% neep
-            if (t% eep(i) == TAMS_EEP) then    !MS
+        do j = 1, t% neep
+            if (t% eep(j) == TAMS_EEP) then    !MS
                 t% times(MS) = age(TAMS_EEP)
 
-            elseif (t% eep(i) == cHeIgnition_EEP) then
+            elseif (t% eep(j) == cHeIgnition_EEP) then
                 !Herztsprung gap
                 t% times(HG) = age(cHeIgnition_EEP)
                 !t% times(HG) gets modified to t(BGB)
                 ! if RGB phase is present
                 t% times(RGB) = t% times(HG)
 
-            elseif (t% eep(i) == TA_cHeB_EEP) then
+            elseif (t% eep(j) == TA_cHeB_EEP) then
                 !red_HB_clump/core He Burning
                 t% times(HeBurn) = age(TA_cHeB_EEP)
 
-            elseif (t% eep(i) == cCBurn_EEP) then
+            elseif (t% eep(j) == cCBurn_EEP) then
                 !EAGB/core C burning
                 t% times(EAGB) = age(cCBurn_EEP)
                 
-            elseif (t% eep(i) == TPAGB_EEP) then
+            elseif (t% eep(j) == TPAGB_EEP) then
                 !AGB
                 t% times(EAGB) = age(TPAGB_EEP)
                 
-            elseif (t% eep(i) == post_AGB_EEP) then
+            elseif (t% eep(j) == post_AGB_EEP) then
                 !TP-AGB :only for low_inter mass stars
                 t% times(TPAGB) = age(post_AGB_EEP)
             endif
         enddo
         !print*,"bgb",BGB_EEP, identified(BGB_EEP)
 
-        t% times(11) = age(min(Final_EEP, t% ntrack))
-        t% MS_time = t% times(MS)
-        !Todo: nuc_time should be for WR phase
-        t% nuc_time = t% times(11)
-        
         !Red giant Branch
         if (t% j_bgb > 1) t% times(HG) = age(t% j_bgb)
                     
+        t% times(11) = age(max_len)
+        t% MS_time = t% times(MS)
 
-        nullify(age)
+        t% nuc_time = t% times(11)
+
+        ! check if the star ever loses its envelope
+        ! if so, recalculate the nuc_time
+
+        core_mass => t% tr(i_he_core, :)
+        total_mass => t% tr(i_mass,:)
+
+        ! find the first point where the envelope stripping condition will be satisfied
+        do j = max_len,ZAMS_EEP, -1
+            if (check_ge(core_mass(j), total_mass(j))) cycle
+            exit
+        end do
+        
+        max_iter = 100
+        if (j <= ZAMS_EEP) then
+            print*, 'error in bisect'
+        else if (j < max_len) then
+            age_start = age(j)  !(Mc<mt) 
+            age_end = age(j+1) !(mc>mt)
+
+            do iter = 1, max_iter
+                tmid = 0.5d0*(age_start+age_end)
+                call interpolate_age(t, tmid, i_mass, m_mid)
+                call interpolate_age(t, tmid, i_he_core, mc_mid)
+
+                if ((check_equal(m_mid,mc_mid)) .or. (check_equal(age_start,age_end))) then
+                    print*, 'nuc_time updated from', t% nuc_time, tmid, t% initial_mass
+                    t% nuc_time = tmid   
+                    exit
+                end if
+                if (mc_mid>m_mid) then
+                    age_end = tmid
+                else
+                    age_start = tmid
+                endif
+            end do
+        endif
+        nullify(age,core_mass,total_mass)
     end subroutine calculate_timescales
     
     subroutine calculate_he_timescales(t)
@@ -972,26 +1013,26 @@ module interp_support
         implicit none
         
         type(track), pointer:: t
-        integer:: i
+        integer:: j
         real(dp), pointer:: age(:)=> NULL()
 
         age => t% tr(i_age2, :)
         
         t% times(He_MS:) = undefined
 
-        do i = 1, t% neep
-            if (t% eep(i) == TAMS_HE_EEP) then    !MS
+        do j = 1, t% neep
+            if (t% eep(j) == TAMS_HE_EEP) then    !MS
                 t% times(He_MS) = age(TAMS_HE_EEP)
 
-            elseif (t% eep(i) == TPAGB_HE_EEP) then
+            elseif (t% eep(j) == TPAGB_HE_EEP) then
                 !helium Herztsprung gap
                 t% times(HE_HG) = age(TPAGB_HE_EEP)
 
-            elseif (t% eep(i) == cCBurn_HE_EEP) then
+            elseif (t% eep(j) == cCBurn_HE_EEP) then
                 !EAGB/core C burning
                 t% times(HE_HG) = age(cCBurn_HE_EEP)
                 
-!            elseif (t% eep(i) == post_AGB_HE_EEP) then
+!            elseif (t% eep(j) == post_AGB_HE_EEP) then
 !                !TP-AGB :only for low_inter mass stars
 !                t% times(10) = age(post_AGB_HE_EEP)
             endif
@@ -1010,16 +1051,7 @@ module interp_support
         if (t% initial_mass > Mcrit_he(4)% mass .and. t% initial_mass < Mcrit_he(5)% mass) then
             if (identified(GB_HE_EEP)) then
                 t% times(HE_HG) = age(GB_HE_EEP)
-            ! TODO: this needs to be written
-!            elseif (t% ntrack > TAMS_EEP) then
-!                j_bgb =  base_GB(t)
-!                if (j_bgb > 0) then
-!                    j_bgb = j_bgb+TAMS_EEP-1
-!                    !Red giant Branch
-!                    t% times(HG) = age(j_bgb)
-!                elseif (debug) then
-!                    print*, "Unable to locate BGB ", j_bgb
-!                end if
+                ! TODO: BGB equivalent for he stars
             endif
         endif
         
