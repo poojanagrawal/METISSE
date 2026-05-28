@@ -127,8 +127,7 @@
         lum_wd = calculate_wd_lum(mass_wd, 0.d0, A_CO)  !xx = a_co
         dt= t% pars% age- t% agb% tini
         m0 = t% pars% mass
-!        print*,"aj",t% pars% age,t% agb% age, dt,t1
-!            print*, t% nuc_time,t% agb% tfinal,dt
+        
         alfa = 0d0; beta = 0d0
         r3 = 0.3*(t% agb% radius+radius_wd)
         t% pars% core_radius = radius_wd

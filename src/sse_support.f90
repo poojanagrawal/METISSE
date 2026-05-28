@@ -49,7 +49,7 @@ module sse_support
     tscls(13) = t% times(EAGB)
     
     tscls(14) = t% times(11)
-    tn = tscls(14)
+    tn = t% nuc_time 
     if (tscls(13)<0) tscls(13) = tn
 
     !filling in the gaps

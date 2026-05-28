@@ -48,12 +48,12 @@ real(dp) function metisse_mlwind(kw,lum,r,mt,mc,rl,z,id)
                 !Using 'abs' as sometime dms is negative due to rounding errors
                 if (t% pars% dt>0.d0) dms = abs(mt-mnext)/(t% pars% dt*1E+6)
 
-            elseif (tnext>= t% nuc_time) then
+            elseif (tnext>= t% times(11)) then
                 if (debug) print*, 'calling interpolate age for fin', tprev
                 call interpolate_age(t, tprev, i_mass, mprev)
                 if (t% pars% dt>0.d0) dms = abs(mprev-mt)/(t% pars% dt*1E+6)
             else
-    !            tnext = min(t% nuc_time, tnext)
+    !            tnext = min(t% times(11), tnext)
                 if (debug) print*, 'calling interpolate age for ', tnext
                 call interpolate_age(t, tnext, i_mass, mnext)
     !            tprev = max(0.d0,tprev)

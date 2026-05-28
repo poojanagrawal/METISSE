@@ -36,7 +36,7 @@
     endif
     
     debug = .false.
-!   if ((id == 1).and. kw<=10 )debug = .true.
+!   if ((id == 1).and. kw==5 )debug = .true.
 !   if(id ==1 .and. t% is_he_track)debug = .true.
 
     if (debug) print*, '-----------HRDIAG-------------'
@@ -82,6 +82,9 @@
                 t% pars% mass = mt
             endif
             
+            ! print*, 'env check', check_ge(t% pars% core_mass,t% pars% mass),t% pars% core_mass,t% pars% mass,t% pars% age
+
+
             IF (check_ge(t% pars% age,t% times(11))) THEN
                 !check if have reached the end of the eep track
                 if (debug)print*,"end of file:aj,tn ",t% pars% age,t% times(11),t% times(max(kw,1))
@@ -193,7 +196,7 @@
             if (front_end > main) t% pars% mass = mt
             if (check_ge(t% pars% age,t% times(11)) .or. (t% pars% core_mass.ge.t% pars% mass)) then
                 !have reached the end of the eep track; self explanatory
-                if (debug) print*,"end of file:aj,tn ",t% pars% age,t% tr(i_he_age,t% ntrack),t% times(kw)
+                if (debug) print*,"end of file:aj",t% pars% age,t% tr(i_he_age,t% ntrack),t% times(kw)
                 
                 j_bagb = min(t% ntrack, TAMS_HE_EEP)
                 Mcbagb = t% tr(i_mass, j_bagb)

@@ -621,7 +621,9 @@ module interp_support
 
         debug_age = .false.
 !         if (t% is_he_track) debug_age = .true.
-!        if (t% pars% phase >= 4 .and. (present(icolumn).eqv..false.)) debug_age = .true.
+    !    if (t% pars% phase >= 4 .and. (present(icolumn).eqv..false.)) debug_age = .true.
+        if ((present(icolumn).eqv..true.)) debug_age = .true.
+
 
         if (debug_age) print*,"in interpolate age",t% pars% phase
         dx = 0d0; alfa = 0d0; beta = 0d0; x = 0d0; y = 0d0
@@ -915,7 +917,7 @@ module interp_support
         type(track), pointer:: t
         integer:: j, max_len, iter, max_iter
         real(dp), pointer:: age(:), core_mass(:), total_mass(:)
-        real(dp) :: m_mid, mc_mid, tmid, age_start, age_end
+        real(dp) :: m_mid, mc_mid, tmid, age_start, age_end, mass_start,mass_end, mc_start, mc_end, alfa, beta
 
 
         ! age(:) => NULL() 
@@ -988,21 +990,38 @@ module interp_support
             age_start = age(j)  !(Mc<mt) 
             age_end = age(j+1) !(mc>mt)
 
+            mass_start = total_mass(j)
+            mc_start = core_mass(j)
+
+            mass_end = total_mass(j+1)
+            mc_end = core_mass(j+1)
+
+            ! print*, 'star stripped at', j, age_start, age_end,mass_start , mc_start ,mass_end ,mc_end 
+
             do iter = 1, max_iter
                 tmid = 0.5d0*(age_start+age_end)
-                call interpolate_age(t, tmid, i_mass, m_mid)
-                call interpolate_age(t, tmid, i_he_core, mc_mid)
 
-                if ((check_equal(m_mid,mc_mid)) .or. (check_equal(age_start,age_end))) then
-                    print*, 'nuc_time updated from', t% nuc_time, tmid, t% initial_mass
+                alfa = (tmid-age_start)/(age_end-age_start)
+                beta = 1d0-alfa
+            
+                m_mid = alfa*mass_end  + beta*mass_start
+                mc_mid = alfa*mc_end  + beta*mc_start
+ 
+                if ((check_equal(m_mid,mc_mid)) ) then  !.or. (check_equal(age_start,age_end))
+                    print*, 'nuc time updated from', t% nuc_time, tmid, t% initial_mass,mc_mid,m_mid
                     t% nuc_time = tmid   
                     exit
                 end if
                 if (mc_mid>m_mid) then
                     age_end = tmid
+                    mass_end = m_mid
+                    mc_end = mc_mid
                 else
                     age_start = tmid
+                    mass_start = m_mid
+                    mc_start = mc_mid
                 endif
+                ! print*, 'iter',iter, age_start, age_end,mc_mid,m_mid
             end do
         endif
         nullify(age,core_mass,total_mass)

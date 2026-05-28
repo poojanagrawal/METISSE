@@ -198,9 +198,9 @@ subroutine METISSE_star(kw, mass, mt, tm, tn, tscls, lums, GB, zpars, dtm, id)
                 call calculate_timescales(t)
                 t% times_new = t% times
                 t% times = times_old
-                t% nuc_time = t% times(11)
-                t% ms_time = t% times(MS)
-                if (t% is_he_track) t% ms_time = t% times(He_MS)
+                ! t% nuc_time = t% times(11)
+                ! t% ms_time = t% times(MS)
+                ! if (t% is_he_track) t% ms_time = t% times(He_MS)
 
                 !TEST: R remains unchanged if Mcenv is significant
                 if (consvR) then
