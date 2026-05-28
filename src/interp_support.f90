@@ -915,14 +915,8 @@ module interp_support
         implicit none
         
         type(track), pointer:: t
-        integer:: j, max_len, iter, max_iter
+        integer:: j, max_len
         real(dp), pointer:: age(:), core_mass(:), total_mass(:)
-        real(dp) :: m_mid, mc_mid, tmid, age_start, age_end, mass_start,mass_end, mc_start, mc_end, alfa, beta
-
-
-        ! age(:) => NULL() 
-        ! core_mass(:)  => NULL()  
-        ! total_mass(:)  => NULL() 
 
         if (t% is_he_track) then
             call calculate_he_timescales(t)
@@ -977,56 +971,58 @@ module interp_support
         core_mass => t% tr(i_he_core, :)
         total_mass => t% tr(i_mass,:)
 
-        ! find the first point where the envelope stripping condition will be satisfied
-        do j = max_len,ZAMS_EEP, -1
-            if (check_ge(core_mass(j), total_mass(j))) cycle
-            exit
-        end do
+        ! ! find the first point where the envelope stripping condition will be satisfied
+        ! do j = max_len,ZAMS_EEP, -1
+        !     if (check_ge(core_mass(j), total_mass(j))) cycle
+        !     exit
+        ! end do
         
-        max_iter = 100
-        if (j <= ZAMS_EEP) then
-            print*, 'error in bisect'
-        else if (j < max_len) then
-            age_start = age(j)  !(Mc<mt) 
-            age_end = age(j+1) !(mc>mt)
+        ! if (j <= ZAMS_EEP) then
+        !     print*, 'error in bisect'
+        ! else if (j < max_len) then
+        !     ! j -> mc<mt 
+        !     !j+1 -> mc>mt 
+        !     ! print*, 'star stripped at', j, age(j), age(j+1), total_mass(j), total_mass(j+1), core_mass(j), core_mass(j+1)
+        !     t% nuc_time = env_loss_bisect(age(j), age(j+1), total_mass(j), total_mass(j+1), core_mass(j), core_mass(j+1))
+        !     print*, 'nuc time updated from', t% times(11), t% nuc_time, t% initial_mass
+        ! endif
 
-            mass_start = total_mass(j)
-            mc_start = core_mass(j)
-
-            mass_end = total_mass(j+1)
-            mc_end = core_mass(j+1)
-
-            ! print*, 'star stripped at', j, age_start, age_end,mass_start , mc_start ,mass_end ,mc_end 
-
-            do iter = 1, max_iter
-                tmid = 0.5d0*(age_start+age_end)
-
-                alfa = (tmid-age_start)/(age_end-age_start)
-                beta = 1d0-alfa
-            
-                m_mid = alfa*mass_end  + beta*mass_start
-                mc_mid = alfa*mc_end  + beta*mc_start
- 
-                if ((check_equal(m_mid,mc_mid)) ) then  !.or. (check_equal(age_start,age_end))
-                    print*, 'nuc time updated from', t% nuc_time, tmid, t% initial_mass,mc_mid,m_mid
-                    t% nuc_time = tmid   
-                    exit
-                end if
-                if (mc_mid>m_mid) then
-                    age_end = tmid
-                    mass_end = m_mid
-                    mc_end = mc_mid
-                else
-                    age_start = tmid
-                    mass_start = m_mid
-                    mc_start = mc_mid
-                endif
-                ! print*, 'iter',iter, age_start, age_end,mc_mid,m_mid
-            end do
-        endif
         nullify(age,core_mass,total_mass)
     end subroutine calculate_timescales
     
+
+    real(dp) function env_loss_bisect(age_start, age_end, mass_start,mass_end, mc_start, mc_end)
+        integer:: iter, max_iter
+        real(dp) :: m_mid, mc_mid, tmid, age_start, age_end, mass_start,mass_end, mc_start, mc_end, alfa, beta
+
+        max_iter = 100
+        do iter = 1, max_iter
+            tmid = 0.5d0*(age_start+age_end)
+
+            alfa = (tmid-age_start)/(age_end-age_start)
+            beta = 1d0-alfa
+        
+            m_mid = alfa*mass_end  + beta*mass_start
+            mc_mid = alfa*mc_end  + beta*mc_start
+
+            if ((check_equal(m_mid,mc_mid,1d-4)) ) then  !.or. (check_equal(age_start,age_end))
+                env_loss_bisect = tmid  + tiny
+                exit
+            end if
+            if (mc_mid>m_mid) then
+                age_end = tmid
+                mass_end = m_mid
+                mc_end = mc_mid
+            else
+                age_start = tmid
+                mass_start = m_mid
+                mc_start = mc_mid
+            endif
+            ! print*, 'iter',iter, age_start, age_end,mc_mid,m_mid
+        end do
+
+    end function
+
     subroutine calculate_he_timescales(t)
         !calculate timescales associated with different he star phases (7, 8, 9)
         implicit none
