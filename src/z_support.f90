@@ -302,19 +302,6 @@ module z_support
         call free_iounit(io)
     end subroutine get_files_from_path
 
-    subroutine get_csafe_string(cstring, fstring)
-        integer :: inull
-        character(LEN=*), intent(in) :: cstring
-        character(LEN=strlen), intent(out) ::  fstring
-
-        inull = index(cstring, char(0))
-        if (inull>0) then
-            fstring = adjustl((cstring(1:inull-1)))
-        else
-            fstring = trim(cstring)
-        endif
-    end subroutine
-    
     subroutine read_MIST_track(x)
         !adapted from iso/iso_eep_support.f90
         type(track), intent(inout) :: x

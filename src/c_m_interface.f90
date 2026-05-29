@@ -324,8 +324,7 @@ contains
 
     subroutine get_CMC_input()
         use track_support
-        use z_support, only: Z_accuracy_limit, get_csafe_string
-        
+
         ! takes inputs from cosmic and assigns them
         ! to appropiate variables in METISSE
         
@@ -338,14 +337,13 @@ contains
         ! remove the null charcater if any
         call get_csafe_string(path_to_tracks,METALLICITY_DIR)
         call get_csafe_string(path_to_he_tracks,METALLICITY_DIR_HE)
-        Z_accuracy_limit = z_match_limit
-        verbose = METISSE_verbose
+        ! Z_accuracy_limit = z_match_limit
+        ! verbose = METISSE_verbose
     
     end subroutine get_CMC_input
 
     logical function check_path_change() result (load_tracks)
         use track_support, only: strlen,METALLICITY_DIR, METALLICITY_DIR_HE
-        use z_support, only: get_csafe_string
 
         character(len=strlen) :: path_to_tracks, path_to_he_tracks
         COMMON/ METISSEVARS/ path_to_tracks,path_to_he_tracks
@@ -363,5 +361,20 @@ contains
         if((trim(path_to_tracks)/=trim(METALLICITY_DIR)) .or. &
             (trim(path_to_he_tracks)/=trim(METALLICITY_DIR_HE))) load_tracks = .true.
     end function
+
+    subroutine get_csafe_string(cstring, fstring)
+        use track_support, only: strlen
+        integer :: inull
+        character(LEN=*), intent(in) :: cstring
+        character(LEN=strlen), intent(out) ::  fstring
+
+        inull = index(cstring, char(0))
+        if (inull>0) then
+            fstring = adjustl((cstring(1:inull-1)))
+        else
+            fstring = trim(cstring)
+        endif
+    end subroutine
+    
 
 end module c_m_interface
