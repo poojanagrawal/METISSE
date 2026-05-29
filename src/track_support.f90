@@ -31,6 +31,8 @@ module track_support
     integer, parameter:: BSE = 2
     integer, parameter:: COSMIC = 3
     integer, parameter:: AMUSE = 4
+    integer, parameter:: CMC = 5
+    
     
     ! mode > 0 enables read-only mode for files when multi-threading in CMC
     integer:: mode = 0
@@ -389,7 +391,7 @@ module track_support
             if (i == 99) print*, 'See error file (fort.99)for details'
         endif
         call flush(6)
-        if (front_end == COSMIC) then
+        if (front_end == COSMIC .or. front_end == CMC) then
             return
         else
             STOP 1

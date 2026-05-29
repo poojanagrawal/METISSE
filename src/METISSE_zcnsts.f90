@@ -90,7 +90,6 @@ subroutine METISSE_zcnsts(z, zpars, ierr)
             call read_metisse_input(infile, ierr)
             if (ierr /= 0) call stop_code
         case(COSMIC)
-             ! call get_COSMIC_input()
             if (.not. allocated(filenames_he_in)) then
                 write(out_unit,*)"Switching to SSE formulae for helium stars "
                 use_sse_NHe = .true.
@@ -100,6 +99,8 @@ subroutine METISSE_zcnsts(z, zpars, ierr)
             if (len(trim(amuse_metallicity_dir)) > 0) METALLICITY_DIR = amuse_metallicity_dir
             if (len(trim(amuse_metallicity_dir_he)) > 0) METALLICITY_DIR_HE = amuse_metallicity_dir_he
             !write(*,*) "path_to_tracks", path_to_tracks
+        case(CMC)
+            call get_CMC_input()
         case default
             print*, "METISSE error: reading inputs; unrecognized front_end_name"
             ierr = 1; return

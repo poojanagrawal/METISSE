@@ -31,10 +31,13 @@ subroutine initialize_front_end(front_end_name)
         ! Astrophysical Multipurpose Software Environment
         ! Pelupessy et al. 2010
         front_end = AMUSE
-        
+    elseif (ANY((/'CMC','cmc'/)== trim(front_end_name))) then
+        ! CMC (Cluster Monte Carlo)
+        ! Cluster evolution code from Rodriguez et al. 2022
+        front_end = CMC
     else
         print*, "METISSE error: Unrecongnized front_end_name for METISSE"
-        print*, "Choose from 'MAIN', 'SSE', 'BSE', 'COSMIC' "
+        print*, "Choose from 'MAIN', 'SSE', 'BSE', 'COSMIC' 'AMUSE', 'CMC'"
     endif
     
 end subroutine initialize_front_end

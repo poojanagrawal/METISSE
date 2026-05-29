@@ -227,7 +227,7 @@
                         call initialize_white_dwarf(t% pars)
                     endif
                 endif
-            ELSEIF (front_end == COSMIC) then
+            ELSEIF (front_end == COSMIC .or. front_end == CMC) then
                 ! storing mass that remnant would be in mt
                 mt = t% pars% mass
                 call assign_remnant(zpars,t% pars% core_mass,&
@@ -254,7 +254,7 @@
     IF(t% pars% phase >= HeWD) THEN
         if (front_end <= main .or. front_end == BSE .or. front_end ==AMUSE) then
             call evolve_remnants_METISSE(t% pars)
-        elseif (front_end == COSMIC) then
+        elseif (front_end == COSMIC .or. front_end == CMC) then
             call hrdiag_remnant(zpars,t% pars% mass,t% pars% core_mass,t% pars% luminosity,&
                             t% pars% radius,t% pars% age,t% pars% phase)
         endif
